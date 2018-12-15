@@ -33,7 +33,7 @@ class FoodBuddyDialog(QtWidgets.QDialog):
             traceback.print_exc()
 
     def setupUI(self):
-        logo = os.path.join(RESOURCE_DIR, "foodbuddy.png")
+        logo = os.path.join(RESOURCE_DIR, "foodbuddy.jpg")
 
         font = QtGui.QFont("AnyStyle", 12)
         pixmap = QtGui.QPixmap(logo)
