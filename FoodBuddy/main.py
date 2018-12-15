@@ -2,6 +2,8 @@ import os
 import sys
 import random
 import string
+import datetime
+import requests
 
 
 class Recipe(object):
@@ -56,9 +58,20 @@ class FoodBuddy(object):
         return recipePath
 
 
+    def URLtoPDF(self, url, pdfpath):
+        """
+            :param url: string 
+            :param pdfpath: path to pdf out 
+        """
+        import pdfkit
+        config = pdfkit.configuration(wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe") 
+        pdfkit.from_url(url, pdfpath, configuration=config)
+
+
+
+
     def publishRecipe(self, recipe):
         """
-            Creates 
         """
         pass
 

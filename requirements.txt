@@ -1,0 +1,11 @@
+# install pdfkit
+pip install pdfkit==0.6.1
+
+# Install wkhtmltopdf
+for Ubuntu/Debian:
+	sudo apt-get install wkhtmltopdf
+for Windows:
+	download using installer in resources folder
+	
+	
+	
