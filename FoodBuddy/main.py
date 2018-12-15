@@ -1,30 +1,65 @@
 import os
 import sys
+import random
+import string
+
+
+class Recipe(object):
+
+    def __init__(self):
+        pass
+
 
 class FoodBuddy(object):
 
     def __init__(self):
+        """
+            Validates USERPROFILE variable is set.
+            Creates FoodBuddy/recipes directory. 
+        """
         self.userProfile = os.environ.get('USERPROFILE', None)
-        self.createRecipesPath()
-
-
-    def createRecipesPath(self):
         if not self.userProfile:
-            raise EnvironmentError('User profile environment variable does not exist.') 
+            raise EnvironmentError('USERPROFILE environment variable does not exist.') 
 
-        self.recipesPath = os.path.join(self.userProfile, 'FoodBuddy', 'recipes')
-        if not os.path.exists(self.recipesPath):
-            os.makedirs(self.recipesPath)
-            print 'making dirs...', self.recipesPath
-            
+        self.directory = os.path.join(self.userProfile, 'FoodBuddy')
+        self.recipesDirectory = os.path.join(self.directory, 'recipes')
+
+        if not os.path.exists(self.recipesDirectory):
+            os.makedirs(self.recipesDirectory)
+
 
     def generateRecipeCode(self):
         """
-            Creates a random 10 digit code [a-Z0-9].
-            Checks if self.recipesPath / code exists, if so keeps trying to generate code up to 20 retries.
-            if not, creates directory.
+            Return a random 10 digit code [a-Z0-9].
+        """
+        return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(10)]) 
+
+
+    def getNewRecipePath(self): 
+        """
+            Returns a non-existing recipe path for new recipe creation.
+            Raises OSError if couldn't generate a unique code after 20 retries.
         """
         maxRetries = 20
+        code = self.generateRecipeCode()
+        recipePath = os.path.join(self.recipesDirectory, code)
+
+        retry = 1 
+        while os.path.exists(recipePath) and retry < maxRetries:
+            code = self.generateRecipeCode()
+            recipePath = os.path.join(self.recipePath, code)
+            retry += 1
+
+        if os.path.exists(recipePath):
+            raise OSError('Could not generate a unique recipe code.')
+
+        return recipePath
+
+
+    def publishRecipe(self, recipe):
+        """
+            Creates 
+        """
+        pass
 
         
-
