@@ -111,6 +111,20 @@ class FoodBuddy(object):
         #     copy from added path --> <recipe ID>/thumbnail.<ext>
 
 
+    def _loadMetadata(self):
+        """
+            Loads metadata.json into dictionary and returns it.
+            Raises IOError if something went wrong loading the file.
+        """
+        with open(self.metadataDirectory, 'r') as fp:
+            data = json.load(fp)
+        
+        if not data:
+            raise IOError('Could not open metadata.json')
+
+        return data
+    
+
     def _addRecipeMetadata(self, recipe):
         """
             :param recipe: Recipe object
@@ -124,12 +138,10 @@ class FoodBuddy(object):
                 'thumbnail': <path to thumbnail>
             }
         """
-        with open(self.metadataDirectory, 'r') as fp:
-            data = json.load(fp)
-
         pdfPath = os.path.join(self.recipesDirectory, recipe.id, 'recipe.pdf')
         notesPath = os.path.join(self.recipesDirectory, recipe.id, 'notes.txt')
 
+        data = self._loadMetadata()
         if recipe.id in data['recipes']:
             raise KeyError("This recipe ID already exists in metadata.json.")
 
@@ -156,17 +168,32 @@ class FoodBuddy(object):
         self._addRecipeMetadata(recipe)
 
         
-    # TODO
-    def getRecipesByTags(self, tags):
+    def getRecipesByTags(self, tags, searchBy='AND'):
         """
             :param tags: list of <str>
+            :param searchBy: <str> of either 'AND' or 'OR', which will be used to check tags. 
 
-            Looks in metadata.json
-            if tags = ['chicken', 'soup'] this will return recipe keys which have BOTH
-            of the tags in the recipe's tags list.
-            TODO: should implement a way to search for AND or OR in tags.
+            Looks in metadata.json and compares tags, AND will match recipes including all tags.
+            OR will match a recipe if it contains any of the tags in the tags list.
         """
-        pass
+        matches = {}
+        tags = [x.lower() for x in tags] # force lowercase
+
+        data = self._loadMetadata()
+        for key, value in data.get('recipes', {}).iteritems():
+            metatags = value.get('tags', [])
+            metatags = [x.lower() for x in metatags]
+
+            if searchBy == 'AND':
+                if set(tags).issubset(set(metatags)): 
+                    matches[key] = value
+            elif searchBy == 'OR':
+                if any(t in max(tags,metatags,key=len) for t in min(tags,metatags,key=len)):
+                    matches[key] = value
+
+        return matches
+
+
 
         
 
