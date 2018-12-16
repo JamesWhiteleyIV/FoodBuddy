@@ -11,6 +11,9 @@ import pdfkit
 class Recipe(object):
 
     def __init__(self, url, title, tags, notes=None):
+        if not url or not title or not tags: 
+            raise ValueError("A recipe must have url, title, and at least one tag")
+
         self.url = url
         self.title = title 
         self.tags = tags
@@ -79,25 +82,21 @@ class FoodBuddy(object):
         pdfkit.from_url(url, pdfpath, configuration=config)
 
 
-    def validateRecipe(self, recipe):
+    def addRecipeFolder(self, recipe):
         """
-            :param recipe: Recipe object
-            Validates that all fields of recipe are valid to publish on disk.
         """
-        #if not valid raise Exception
-        # TODO:
+
+
+    def addRecipeMetadata(self, recipe):
+        """
+        """
 
 
     def publishRecipe(self, recipe):
         """
             :param recipe: Recipe object
         """
-        validateRecipe(recipe)
-
-        # create recipe folder with all files
-        # add recipe data to metadata.json
-
-
-        pass
+        addRecipeFolder(recipe)
+        addRecipeMetadata(recipe)
 
         
