@@ -1,6 +1,6 @@
 import os
 import sys
-from Qt import QtCore, QtGui, QtWidgets
+from PyQt4 import QtCore, QtGui, QtWidgets
 
 
 dialogs = {}

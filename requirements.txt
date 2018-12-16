@@ -1,4 +1,4 @@
-# install pdfkit
+# Install pdfkit
 pip install pdfkit==0.6.1
 
 # Install wkhtmltopdf
@@ -6,6 +6,8 @@ for Ubuntu/Debian:
 	sudo apt-get install wkhtmltopdf
 for Windows:
 	download using installer in resources folder
+	"~\FoodBuddy\FoodBuddy\resources\wkhtmltox-0.12.5-1.msvc2015-win64.exe"
 	
-	
-	
+# Install PyQt4 
+Windows:  pip install "~\FoodBuddy\pyqt\PyQt4-4.11.4-cp27-cp27m-win_amd64.whl"
+Mac/Linux (not sure if this works):  sudo apt-get install python-qt4
