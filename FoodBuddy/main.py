@@ -18,6 +18,7 @@ class Recipe(object):
             :param notes: <str> 
             :param thumbnail: <str> path to thumbnail image
         """
+        self.id = self._generateRecipeID()
         self.url = url
         self.title = title 
         self.tags = tags
@@ -34,6 +35,15 @@ class Recipe(object):
     
         if len(self.tags) < 1:
             raise ValueError("A recipe must have url, title, and at least one tag")
+
+    def _generateRecipeID(self):
+        """
+            Return a random 10 digit string [a-Z0-9].
+        """
+        return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(10)]) 
+
+    def generateNewID(self):
+        self.id = self._generateRecipeID()
 
 
 class FoodBuddy(object):
@@ -61,34 +71,6 @@ class FoodBuddy(object):
                 json.dump(data, fp, indent=4)
 
 
-    def _generateRecipeCode(self):
-        """
-            Return a random 10 digit code [a-Z0-9].
-        """
-        return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(10)]) 
-
-
-    def _getNewRecipePath(self): 
-        """
-            Returns a non-existing recipe path for new recipe creation.
-            Raises OSError if couldn't generate a unique code after 20 retries.
-        """
-        maxRetries = 20
-        code = self._generateRecipeCode()
-        recipePath = os.path.join(self.recipesDirectory, code)
-
-        retry = 1 
-        while os.path.exists(recipePath) and retry < maxRetries:
-            code = self._generateRecipeCode()
-            recipePath = os.path.join(self.recipePath, code)
-            retry += 1
-
-        if os.path.exists(recipePath):
-            raise OSError('Could not generate a unique recipe code.')
-
-        return recipePath
-
-
     def _urlToPdf(self, url, pdfpath):
         """
             :param url: string 
@@ -102,11 +84,19 @@ class FoodBuddy(object):
         """
             :param recipe: Recipe object
 
-            Creates FoodBuddy/recipes/<code> directory. 
+            Creates FoodBuddy/recipes/<ID> directory. 
             Create pdf from URL in directory.
             Create txt file from notes in directory.
         """
-        recipePath = self._getNewRecipePath()
+        recipePath = os.path.join(self.recipesDirectory, recipe.id) 
+        retries = 0
+        while os.path.exists(recipePath) and retries < 20:
+            recipe.generateNewID()
+            retries += 1
+
+        if os.path.exists(recipePath):
+            raise OSError("Could not generate a unique ID for recipe.")
+
         os.makedirs(recipePath)
 
         pdfPath = os.path.join(recipePath, 'recipe.pdf')
@@ -118,7 +108,7 @@ class FoodBuddy(object):
 
         # TODO: setup thumbnail support
         #if recipe.thumbnail:
-        #     copy from added path --> <recipe code>/thumbnail.<ext>
+        #     copy from added path --> <recipe ID>/thumbnail.<ext>
 
 
     def _addRecipeMetadata(self, recipe):
@@ -126,7 +116,7 @@ class FoodBuddy(object):
             :param recipe: Recipe object
 
             Adds:
-            <code> : {
+            <ID> : {
                 'title': <title>,
                 'tags': [<tag1>, <tag2>, ... ],
                 'pdf': <path to pdf>,
@@ -137,8 +127,22 @@ class FoodBuddy(object):
         with open(self.metadataDirectory, 'r') as fp:
             data = json.load(fp)
 
-        print "ADD RECIPE TO META DATA"
-        print data
+        pdfPath = os.path.join(self.recipesDirectory, recipe.id, 'recipe.pdf')
+        notesPath = os.path.join(self.recipesDirectory, recipe.id, 'notes.txt')
+
+        if recipe.id in data['recipes']:
+            raise KeyError("This recipe ID already exists in metadata.json.")
+
+        data['recipes'][recipe.id] = {
+                'title': recipe.title,
+                'tags': recipe.tags,
+                'pdf': pdfPath, 
+                'notes': notesPath, 
+                'thumbnail': recipe.thumbnail,
+                }
+
+        with open(self.metadataDirectory, 'w') as fp:
+            json.dump(data, fp, indent=4)
 
 
     def publishRecipe(self, recipe):
@@ -152,3 +156,21 @@ class FoodBuddy(object):
         self._addRecipeMetadata(recipe)
 
         
+    # TODO
+    def getRecipesByTags(self, tags):
+        """
+            :param tags: list of <str>
+
+            Looks in metadata.json
+            if tags = ['chicken', 'soup'] this will return recipe keys which have BOTH
+            of the tags in the recipe's tags list.
+            TODO: should implement a way to search for AND or OR in tags.
+        """
+        pass
+
+        
+
+
+
+
+
