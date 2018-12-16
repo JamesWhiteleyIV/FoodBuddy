@@ -4,12 +4,17 @@ import random
 import string
 import datetime
 import requests
+import json
+import pdfkit
 
 
 class Recipe(object):
 
-    def __init__(self):
-        pass
+    def __init__(self, url, title, tags, notes=None):
+        self.url = url
+        self.title = title 
+        self.tags = tags
+        self.notes = notes
 
 
 class FoodBuddy(object):
@@ -18,16 +23,23 @@ class FoodBuddy(object):
         """
             Validates USERPROFILE variable is set.
             Creates FoodBuddy/recipes directory. 
+            Creates FoodBuddy/metadata.json file.
         """
         self.userProfile = os.environ.get('USERPROFILE', None)
+        self.directory = os.path.join(self.userProfile, 'FoodBuddy')
+        self.recipesDirectory = os.path.join(self.directory, 'recipes')
+        self.metadataDirectory = os.path.join(self.directory, 'metadata.json') 
+
         if not self.userProfile:
             raise EnvironmentError('USERPROFILE environment variable does not exist.') 
 
-        self.directory = os.path.join(self.userProfile, 'FoodBuddy')
-        self.recipesDirectory = os.path.join(self.directory, 'recipes')
-
         if not os.path.exists(self.recipesDirectory):
             os.makedirs(self.recipesDirectory)
+
+        if not os.path.exists(self.metadataDirectory):
+            with open(self.metadataDirectory, 'w') as fp:
+                data = {"recipes": {}}
+                json.dump(data, fp, indent=4)
 
 
     def generateRecipeCode(self):
@@ -58,21 +70,34 @@ class FoodBuddy(object):
         return recipePath
 
 
-    def URLtoPDF(self, url, pdfpath):
+    def urlToPdf(self, url, pdfpath):
         """
             :param url: string 
             :param pdfpath: path to pdf out 
         """
-        import pdfkit
         config = pdfkit.configuration(wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe") 
         pdfkit.from_url(url, pdfpath, configuration=config)
 
 
+    def validateRecipe(self, recipe):
+        """
+            :param recipe: Recipe object
+            Validates that all fields of recipe are valid to publish on disk.
+        """
+        #if not valid raise Exception
+        # TODO:
 
 
     def publishRecipe(self, recipe):
         """
+            :param recipe: Recipe object
         """
+        validateRecipe(recipe)
+
+        # create recipe folder with all files
+        # add recipe data to metadata.json
+
+
         pass
 
         
