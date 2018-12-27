@@ -4,6 +4,8 @@ from PyQt4 import QtGui, QtCore
 import api
 
 """
+#recipe = api.Recipe('url', 'title', ['chicken', 'taco'], 'notesss')
+
 NOTE: sample error
 message = ErrorMessage(
             "User Error",
@@ -47,7 +49,6 @@ class ErrorMessage(QtGui.QDialog):
         mainLayout.addLayout(self.buttonLayout, 1, 0)
 
         self.setWindowTitle("ERROR")
-
         self.setLayout(mainLayout)
         self.okayButton.setFocus()
 
@@ -58,10 +59,86 @@ class ErrorMessage(QtGui.QDialog):
         self.okayButton.clicked.connect(self.accept)
 
 
+class BrowseWindow(QtGui.QDialog):
+    """ Used to browse recipes """
+    def __init__(self, *args, **kwargs):
+        super(BrowseWindow, self).__init__(*args, **kwargs)
+        self.setWindowTitle('Recipe Browser')
+
+        mainLayout = QtGui.QVBoxLayout()
+        self.setLayout(mainLayout)
+
+
+class StatusLabel(QtGui.QWidget):
+    def __init__(self, parent=None):
+        super(StatusLabel, self).__init__()
+        self.timeoutTimer = QtCore.QTimer(parent=self)
+        self.timeoutTimer.setSingleShot(True)
+
+        self.textWidget = QtGui.QLabel()
+        self.textWidget.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        self.textWidget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        self.textWidget.setOpenExternalLinks(True)
+
+        mainLayout = QtGui.QHBoxLayout() 
+        mainLayout.addWidget(self.textWidget)
+        self.setLayout(mainLayout)
+
+        self.timeoutTimer.timeout.connect(self._onTimeout)
+        self.hide()
+
+    def _onTimeout(self):
+        self.textWidget.setText('')
+        self.textWidget.setToolTip('')
+        self.textWidget.setStyleSheet('')
+        self.hide()
+
+    def showMessage(self, message, timeout=None):
+        self.textWidget.setText(message)
+        self.show()
+        if timeout:
+            self.timeoutTimer.start(timeout)
+
+
+class RecipeUrlWidget(QtGui.QLineEdit):
+
+    def __init__(self):
+        super(RecipeUrlWidget, self).__init__()
+        self.setDragEnabled(True)
+
+    def dragEnterEvent(self, event):
+        data = event.mimeData()
+        print data
+        urls = data.urls()
+        print "ENTER:", urls
+        print urls[0].toLocalFile()
+        if (urls and urls[0].scheme() == 'file'):
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event):
+        data = event.mimeData()
+        print data
+        urls = data.urls()
+        print "DRAG:", urls
+        if (urls and urls[0].scheme() == 'file'):
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        data = event.mimeData()
+        print data
+        urls = data.urls()
+        print "DROP:", urls
+        if (urls and urls[0].scheme() == 'file'):
+            filepath = str(urls[0].path())[1:]
+            self.setText(filepath)
+
+
+
 class FoodBuddyWidget(QtGui.QWidget):
 
     def __init__(self):
         super(FoodBuddyWidget, self).__init__()
+        self.foodBuddy = api.FoodBuddy()
         self._setupUI()
         self.show()
 
@@ -71,6 +148,23 @@ class FoodBuddyWidget(QtGui.QWidget):
         burgerIcon = os.path.join(RESOURCE_DIR, 'burger.png')
         self.setWindowIcon(QtGui.QIcon(burgerIcon))
         self.center()
+
+        self.recipeUrl = RecipeUrlWidget()
+        """
+        self.recipeTitle
+        self.recipeNotes
+        self.recipeTags
+        self.browseButton
+        self.AddButton
+        """
+        self.statusLabel = StatusLabel()
+        self.mainLayout = QtGui.QVBoxLayout()
+        self.mainGridLayout = QtGui.QGridLayout()
+        self.mainGridLayout.addWidget(self.recipeUrl, 0, 0)
+        self.mainGridLayout.addWidget(self.statusLabel, 0, 1)
+
+        self.mainLayout.addLayout(self.mainGridLayout)
+        self.setLayout(self.mainLayout)
 
     def _connectSignals(self):
         pass
