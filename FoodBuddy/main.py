@@ -4,7 +4,6 @@ from PyQt4 import QtGui, QtCore
 import api
 
 
-
 RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESOURCE_DIR = os.path.join(RESOURCE_DIR, 'resources')
 
@@ -210,14 +209,16 @@ class FoodBuddyWidget(QtGui.QWidget):
         title = str(self.recipeTitle.text())
         notes = str(self.recipeNotes.toPlainText())
         tags = str(self.recipeTags.text())
-        tags = tags.split(',')
+        tags = [x.strip() for x in tags.split(',')]
         recipe = api.Recipe(url, title, tags, notes)
         return recipe
 
     def addRecipe(self):
         try:
+            self.updateStatus("Adding Recipe, this may take a minute...")
+            self.addRecipeButton.setEnabled(False)
             recipe = self.generateRecipe()
-            self.updateStatus("adding recipe...")
+            self.foodBuddy.publishRecipe(recipe)
         except Exception as err:
             self.updateStatus(
                     "Error adding recipe",
@@ -227,16 +228,13 @@ class FoodBuddyWidget(QtGui.QWidget):
                         "The following error occurred: {}".format(err),
                         parent=self)
             message.exec_()
+            self.addRecipeButton.setEnabled(True)
             return
         else:
             self.updateStatus(
                     "Recipe added successfully",
                     styling='background: green;')
-
-
-
-
-
+            self.addRecipeButton.setEnabled(True)
 
 def run():
     app = QtGui.QApplication(sys.argv)
