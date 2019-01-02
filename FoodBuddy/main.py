@@ -105,33 +105,14 @@ class RecipeUrlWidget(QtGui.QLineEdit):
     def __init__(self):
         super(RecipeUrlWidget, self).__init__()
         self.setDragEnabled(True)
-
-    def dragEnterEvent(self, event):
-        data = event.mimeData()
-        print data
-        urls = data.urls()
-        print "ENTER:", urls
-        print urls[0].toLocalFile()
-        if (urls and urls[0].scheme() == 'file'):
-            event.acceptProposedAction()
-
-    def dragMoveEvent(self, event):
-        data = event.mimeData()
-        print data
-        urls = data.urls()
-        print "DRAG:", urls
-        if (urls and urls[0].scheme() == 'file'):
-            event.acceptProposedAction()
+        self.setPlaceholderText("Drag or type URL of recipe here")
 
     def dropEvent(self, event):
         data = event.mimeData()
-        print data
         urls = data.urls()
-        print "DROP:", urls
-        if (urls and urls[0].scheme() == 'file'):
-            filepath = str(urls[0].path())[1:]
+        if urls and urls[0].scheme() in ('http', 'https'):
+            filepath = urls[0].toString() 
             self.setText(filepath)
-
 
 
 class FoodBuddyWidget(QtGui.QWidget):
@@ -140,6 +121,8 @@ class FoodBuddyWidget(QtGui.QWidget):
         super(FoodBuddyWidget, self).__init__()
         self.foodBuddy = api.FoodBuddy()
         self._setupUI()
+        self._connectSignals()
+        self.setFocus()
         self.show()
 
     def _setupUI(self):
@@ -150,6 +133,8 @@ class FoodBuddyWidget(QtGui.QWidget):
         self.center()
 
         self.recipeUrl = RecipeUrlWidget()
+        print self.recipeUrl.placeholderText()
+        self.clearButton = QtGui.QPushButton("Clear")     
         """
         self.recipeTitle
         self.recipeNotes
@@ -161,13 +146,14 @@ class FoodBuddyWidget(QtGui.QWidget):
         self.mainLayout = QtGui.QVBoxLayout()
         self.mainGridLayout = QtGui.QGridLayout()
         self.mainGridLayout.addWidget(self.recipeUrl, 0, 0)
-        self.mainGridLayout.addWidget(self.statusLabel, 0, 1)
+        self.mainGridLayout.addWidget(self.clearButton, 0, 1)
+        self.mainGridLayout.addWidget(self.statusLabel, 1, 0)
 
         self.mainLayout.addLayout(self.mainGridLayout)
         self.setLayout(self.mainLayout)
 
     def _connectSignals(self):
-        pass
+        self.clearButton.clicked.connect(self.recipeUrl.clear)
 
     def center(self):
         """ Centers GUI in middle of screen """
