@@ -51,10 +51,46 @@ class BrowseWindow(QtGui.QDialog):
     """ Used to browse recipes """
     def __init__(self, *args, **kwargs):
         super(BrowseWindow, self).__init__(*args, **kwargs)
+        self.setFocus()
+        self._setupUI()
+        self._connectSignals()
+
+    def _setupUI(self):
         self.setWindowTitle('Recipe Browser')
 
-        mainLayout = QtGui.QVBoxLayout()
-        self.setLayout(mainLayout)
+        recipeTagsLabel = QtGui.QLabel("Recipe Tags:")
+        self.recipeTags = QtGui.QLineEdit()
+        self.recipeTags.setPlaceholderText("Example: Chicken, tortilla, soup")
+        self.clearButton = QtGui.QPushButton("Clear")     
+
+        andLabel = QtGui.QLabel("Only show recipes that include ALL tags")
+        orLabel = QtGui.QLabel("Show recipes that include ANY tags")
+        self.orButton = QtGui.QRadioButton()
+        self.andButton = QtGui.QRadioButton()
+        self.andButton.setChecked(True)
+
+        self.mainLayout = QtGui.QVBoxLayout()
+        self.mainGridLayout = QtGui.QGridLayout()
+        self.mainGridLayout.addWidget(andLabel, 0, 0)
+        self.mainGridLayout.addWidget(self.andButton, 0, 1)
+        self.mainGridLayout.addWidget(orLabel, 1, 0)
+        self.mainGridLayout.addWidget(self.orButton, 1, 1)
+        self.mainGridLayout.addWidget(recipeTagsLabel, 2, 0)
+        self.mainGridLayout.addWidget(self.recipeTags, 2, 1)
+        self.mainGridLayout.addWidget(self.clearButton, 2, 2)
+
+        self.mainLayout.addLayout(self.mainGridLayout)
+        self.setLayout(self.mainLayout)
+
+    def _connectSignals(self):
+        self.recipeTags.textChanged.connect(self.updateRecipes)
+        self.andButton.toggled.connect(self.updateRecipes)
+        #self.orButton.toggled.connect(self.updateRecipes)
+
+    def updateRecipes(self):
+        print self.recipeTags.text()
+        print "AND", self.andButton.isChecked()
+        print "OR", self.orButton.isChecked()
 
 
 class StatusLabel(QtGui.QWidget):
@@ -89,6 +125,7 @@ class StatusLabel(QtGui.QWidget):
             self.timeoutTimer.start(timeout)
 
 
+# TODO: make it so you can drag in word, txt, pdf file
 class RecipeUrlWidget(QtGui.QLineEdit):
 
     def __init__(self):
@@ -109,6 +146,7 @@ class FoodBuddyWidget(QtGui.QWidget):
     def __init__(self):
         super(FoodBuddyWidget, self).__init__()
         self.foodBuddy = api.FoodBuddy()
+        self.recipeBrowser = None
         self._setupUI()
         self._connectSignals()
         self.setFocus()
@@ -179,6 +217,7 @@ class FoodBuddyWidget(QtGui.QWidget):
         self.recipeTitle.textChanged.connect(self.updateAddButton)
         self.recipeTags.textChanged.connect(self.updateAddButton)
         self.addButton.clicked.connect(self.addRecipe)
+        self.browseButton.clicked.connect(self.openRecipeBrowser)
 
     def center(self):
         """ Centers GUI in middle of screen """
@@ -212,6 +251,12 @@ class FoodBuddyWidget(QtGui.QWidget):
         tags = [x.strip() for x in tags.split(',')]
         recipe = api.Recipe(url, title, tags, notes)
         return recipe
+
+    def openRecipeBrowser(self):
+        if self.recipeBrowser is None:
+            self.recipeBrowser = BrowseWindow(self) 
+        self.recipeBrowser.show()
+        self.recipeBrowser.raise_()
 
     def addRecipe(self):
         try:
