@@ -3,18 +3,7 @@ import os
 from PyQt4 import QtGui, QtCore
 import api
 
-"""
-#recipe = api.Recipe('url', 'title', ['chicken', 'taco'], 'notesss')
 
-NOTE: sample error
-message = ErrorMessage(
-            "User Error",
-            "Could not create pdf of recipe",
-            parent=self)
-        message.exec_()
-        return
-
-"""
 
 RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESOURCE_DIR = os.path.join(RESOURCE_DIR, 'resources')
@@ -125,9 +114,6 @@ class FoodBuddyWidget(QtGui.QWidget):
         self._connectSignals()
         self.setFocus()
         self.show()
-        self.updateStatus(
-                "Error adding recipe",
-                styling='background: red;')
 
     def _setupUI(self):
         self.setGeometry(50, 50, 600, 800)
@@ -190,6 +176,10 @@ class FoodBuddyWidget(QtGui.QWidget):
         self.clearButton1.clicked.connect(self.recipeUrl.clear)
         self.clearButton2.clicked.connect(self.recipeTitle.clear)
         self.clearButton3.clicked.connect(self.recipeTags.clear)
+        self.recipeUrl.textChanged.connect(self.updateAddButton)
+        self.recipeTitle.textChanged.connect(self.updateAddButton)
+        self.recipeTags.textChanged.connect(self.updateAddButton)
+        self.addButton.clicked.connect(self.addRecipe)
 
     def center(self):
         """ Centers GUI in middle of screen """
@@ -200,10 +190,52 @@ class FoodBuddyWidget(QtGui.QWidget):
         self.move(frameGm.topLeft())
 
     def updateStatus(self, message, **kwargs):
-        kwargs['styling'] = 'background: grey;' + kwargs.get('styling', '')
+        kwargs['styling'] = 'color: white; background: grey; padding: 3px;' + kwargs.get('styling', '')
         self.statusLabel.showMessage(message, **kwargs)
         self.repaint()
         QtCore.QCoreApplication.processEvents()
+
+    def updateAddButton(self):
+        if self.recipeUrl.text() == '':
+            self.addButton.setEnabled(False)
+        elif self.recipeTitle.text() == '':
+            self.addButton.setEnabled(False)
+        elif self.recipeTags.text() == '':
+            self.addButton.setEnabled(False)
+        else:
+            self.addButton.setEnabled(True)
+
+    def generateRecipe(self): 
+        url = str(self.recipeUrl.text())
+        title = str(self.recipeTitle.text())
+        notes = str(self.recipeNotes.toPlainText())
+        tags = str(self.recipeTags.text())
+        tags = tags.split(',')
+        recipe = api.Recipe(url, title, tags, notes)
+        return recipe
+
+    def addRecipe(self):
+        try:
+            recipe = self.generateRecipe()
+            self.updateStatus("adding recipe...")
+        except Exception as err:
+            self.updateStatus(
+                    "Error adding recipe",
+                    styling='background: red;')
+            message = ErrorMessage(
+                        "Error",
+                        "The following error occurred: {}".format(err),
+                        parent=self)
+            message.exec_()
+            return
+        else:
+            self.updateStatus(
+                    "Recipe added successfully",
+                    styling='background: green;')
+
+
+
+
 
 
 def run():
