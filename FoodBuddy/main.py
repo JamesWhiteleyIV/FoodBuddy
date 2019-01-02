@@ -47,8 +47,43 @@ class ErrorMessage(QtGui.QDialog):
         self.okayButton.clicked.connect(self.accept)
 
 
+
+class RecipeListWidget(QtGui.QWidget):
+
+    def __init__(self, *args, **kwargs):
+        super(RecipeListWidget, self).__init__(*args, **kwargs)
+        self._setupUI()
+
+    def _setupUI(self):
+        mainLayout = QtCore.QVBoxLayout()
+        self.setLayout(mainLayout)
+
+    def addRecipeWidget(self, widget):
+        pass
+
+    def clearRecipeWidgets(self):
+        pass
+
+
+class RecipeWidget(QtGui.QWidget):
+    def __init__(self, *args, **kwargs):
+        super(RecipeWidget, self).__init__(*args, **kwargs)
+        self.data = data
+        self._setupUI()
+
+    def _setupUI(self):
+        self.title = self.data.get('title', '')
+
+        mainLayout = QtCore.QHBoxLayout()
+        mainLayout.addWidget()
+        self.setLayout(mainLayout)
+
+
+
 class BrowseWindow(QtGui.QDialog):
     """ Used to browse recipes """
+    criteriaChange = QtCore.pyqtSignal()
+
     def __init__(self, *args, **kwargs):
         super(BrowseWindow, self).__init__(*args, **kwargs)
         self.setFocus()
@@ -83,14 +118,12 @@ class BrowseWindow(QtGui.QDialog):
         self.setLayout(self.mainLayout)
 
     def _connectSignals(self):
+        self.clearButton.clicked.connect(self.recipeTags.clear)
         self.recipeTags.textChanged.connect(self.updateRecipes)
         self.andButton.toggled.connect(self.updateRecipes)
-        #self.orButton.toggled.connect(self.updateRecipes)
 
     def updateRecipes(self):
-        print self.recipeTags.text()
-        print "AND", self.andButton.isChecked()
-        print "OR", self.orButton.isChecked()
+        self.criteriaChange.emit()
 
 
 class StatusLabel(QtGui.QWidget):
@@ -255,13 +288,29 @@ class FoodBuddyWidget(QtGui.QWidget):
     def openRecipeBrowser(self):
         if self.recipeBrowser is None:
             self.recipeBrowser = BrowseWindow(self) 
+            self.recipeBrowser.criteriaChange.connect(self.setBrowserRecipes)
         self.recipeBrowser.show()
         self.recipeBrowser.raise_()
+
+    def setBrowserRecipes(self):
+        if self.recipeBrowser:
+            tags = str(self.recipeBrowser.recipeTags.text())
+            tags = [x.strip() for x in tags.split(',')]
+            if self.recipeBrowser.andButton.isChecked():
+                searchBy = 'AND'
+                print "AND"
+            else:
+                searchBy = 'OR'
+                print "OR"
+            recipes = self.foodBuddy.getRecipesByTags(tags, searchBy)
+            for key, value in recipes.iteritems():
+                print key, '-->', value
+
 
     def addRecipe(self):
         try:
             self.updateStatus("Adding Recipe, this may take a minute...")
-            self.addRecipeButton.setEnabled(False)
+            self.addButton.setEnabled(False)
             recipe = self.generateRecipe()
             self.foodBuddy.publishRecipe(recipe)
         except Exception as err:
@@ -273,13 +322,13 @@ class FoodBuddyWidget(QtGui.QWidget):
                         "The following error occurred: {}".format(err),
                         parent=self)
             message.exec_()
-            self.addRecipeButton.setEnabled(True)
+            self.addButton.setEnabled(True)
             return
         else:
             self.updateStatus(
                     "Recipe added successfully",
                     styling='background: green;')
-            self.addRecipeButton.setEnabled(True)
+            self.addButton.setEnabled(True)
 
 def run():
     app = QtGui.QApplication(sys.argv)
