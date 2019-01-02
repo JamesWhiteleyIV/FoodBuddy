@@ -93,8 +93,9 @@ class StatusLabel(QtGui.QWidget):
         self.textWidget.setStyleSheet('')
         self.hide()
 
-    def showMessage(self, message, timeout=None):
+    def showMessage(self, message, timeout=None, styling=''):
         self.textWidget.setText(message)
+        self.textWidget.setStyleSheet(styling)
         self.show()
         if timeout:
             self.timeoutTimer.start(timeout)
@@ -124,6 +125,9 @@ class FoodBuddyWidget(QtGui.QWidget):
         self._connectSignals()
         self.setFocus()
         self.show()
+        self.updateStatus(
+                "Error adding recipe",
+                styling='background: red;')
 
     def _setupUI(self):
         self.setGeometry(50, 50, 600, 800)
@@ -149,13 +153,21 @@ class FoodBuddyWidget(QtGui.QWidget):
         recipeNotesLabel = QtGui.QLabel("Recipe Notes:")
         self.recipeNotes = QtGui.QTextEdit()
         self.recipeNotes.setMinimumHeight(200)
+        recipeNotesLabel.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
 
-        """
-        self.browseButton
-        self.AddButton
-        """
+        self.browseButton = QtGui.QPushButton("Browse Recipes")     
+        self.browseButton.setMaximumWidth(100)
+        self.addButton = QtGui.QPushButton("Add Recipe")     
+        self.addButton.setMaximumWidth(100)
+        self.addButton.setEnabled(False)
+
         self.statusLabel = StatusLabel()
         self.mainLayout = QtGui.QVBoxLayout()
+        self.buttonLayout = QtGui.QHBoxLayout()
+        self.buttonLayout.addStretch()
+        self.buttonLayout.addWidget(self.browseButton)
+        self.buttonLayout.addWidget(self.addButton)
+
         self.mainGridLayout = QtGui.QGridLayout()
         self.mainGridLayout.addWidget(recipeUrlLabel, 0, 0)
         self.mainGridLayout.addWidget(self.recipeUrl, 0, 1)
@@ -168,8 +180,8 @@ class FoodBuddyWidget(QtGui.QWidget):
         self.mainGridLayout.addWidget(self.clearButton3, 2, 2)
         self.mainGridLayout.addWidget(recipeNotesLabel, 3, 0, 1, 1)
         self.mainGridLayout.addWidget(self.recipeNotes, 3, 1, 1, 2)
-
-        #self.mainGridLayout.addWidget(self.statusLabel, 3, 0)
+        self.mainGridLayout.addLayout(self.buttonLayout, 4, 0, 1, 3)
+        self.mainGridLayout.addWidget(self.statusLabel, 5, 0, 1, 3)
 
         self.mainLayout.addLayout(self.mainGridLayout)
         self.setLayout(self.mainLayout)
@@ -186,6 +198,13 @@ class FoodBuddyWidget(QtGui.QWidget):
         centerPoint = QtGui.QApplication.desktop().screenGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
+
+    def updateStatus(self, message, **kwargs):
+        kwargs['styling'] = 'background: grey;' + kwargs.get('styling', '')
+        self.statusLabel.showMessage(message, **kwargs)
+        self.repaint()
+        QtCore.QCoreApplication.processEvents()
+
 
 def run():
     app = QtGui.QApplication(sys.argv)
