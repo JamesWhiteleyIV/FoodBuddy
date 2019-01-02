@@ -55,29 +55,53 @@ class RecipeListWidget(QtGui.QWidget):
         self._setupUI()
 
     def _setupUI(self):
-        mainLayout = QtCore.QVBoxLayout()
-        self.setLayout(mainLayout)
+        self.listBox = QtGui.QVBoxLayout(self)
+        self.setLayout(self.listBox)
+
+        self.scroll = QtGui.QScrollArea() 
+        self.listBox.addWidget(self.scroll)
+        self.scroll.setWidgetResizable(True)
+        self.scrollContent = QtGui.QWidget(self.scroll)
+
+        self.scrollLayout = QtGui.QVBoxLayout(self.scrollContent)
+        self.scrollContent.setLayout(self.scrollLayout)
+        self.scroll.setWidget(self.scrollContent)
+        self.scrollLayout.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
 
     def addRecipeWidget(self, widget):
-        pass
+        self.scrollLayout.addWidget(widget)
+        self.scroll.setWidget(self.scrollContent)
 
     def clearRecipeWidgets(self):
-        pass
+        for i in reversed(range(self.scrollLayout.count())): 
+            self.scrollLayout.itemAt(i).widget().setParent(None)
 
 
 class RecipeWidget(QtGui.QWidget):
-    def __init__(self, *args, **kwargs):
+    STYLESHEET = """
+                background-color: grey;
+                color: white;
+                selection-background-color: white;
+                selection-color: grey;
+                padding: 5px;
+                border-width: 2px;
+                border-style: outset;
+                """
+
+    def __init__(self, data={}, *args, **kwargs):
         super(RecipeWidget, self).__init__(*args, **kwargs)
         self.data = data
+        self.setStyleSheet(self.STYLESHEET)
         self._setupUI()
+        self.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
     def _setupUI(self):
-        self.title = self.data.get('title', '')
-
-        mainLayout = QtCore.QHBoxLayout()
-        mainLayout.addWidget()
+        title = self.data.get('title', '')
+        titleLabel = QtGui.QLabel(title)
+        mainLayout = QtGui.QHBoxLayout()
+        mainLayout.addWidget(titleLabel)
         self.setLayout(mainLayout)
-
 
 
 class BrowseWindow(QtGui.QDialog):
@@ -104,6 +128,8 @@ class BrowseWindow(QtGui.QDialog):
         self.andButton = QtGui.QRadioButton()
         self.andButton.setChecked(True)
 
+        self.recipeList = RecipeListWidget(self)
+
         self.mainLayout = QtGui.QVBoxLayout()
         self.mainGridLayout = QtGui.QGridLayout()
         self.mainGridLayout.addWidget(andLabel, 0, 0)
@@ -113,6 +139,7 @@ class BrowseWindow(QtGui.QDialog):
         self.mainGridLayout.addWidget(recipeTagsLabel, 2, 0)
         self.mainGridLayout.addWidget(self.recipeTags, 2, 1)
         self.mainGridLayout.addWidget(self.clearButton, 2, 2)
+        self.mainGridLayout.addWidget(self.recipeList, 3, 0, 1, 3)
 
         self.mainLayout.addLayout(self.mainGridLayout)
         self.setLayout(self.mainLayout)
@@ -303,8 +330,10 @@ class FoodBuddyWidget(QtGui.QWidget):
                 searchBy = 'OR'
                 print "OR"
             recipes = self.foodBuddy.getRecipesByTags(tags, searchBy)
-            for key, value in recipes.iteritems():
-                print key, '-->', value
+            self.recipeBrowser.recipeList.clearRecipeWidgets()
+            for code, data in recipes.iteritems():
+                recipeWidget = RecipeWidget(data=data) 
+                self.recipeBrowser.recipeList.addRecipeWidget(recipeWidget)
 
 
     def addRecipe(self):
