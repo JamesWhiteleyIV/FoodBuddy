@@ -105,7 +105,7 @@ class RecipeUrlWidget(QtGui.QLineEdit):
     def __init__(self):
         super(RecipeUrlWidget, self).__init__()
         self.setDragEnabled(True)
-        self.setPlaceholderText("Drag or type URL of recipe here")
+        self.setPlaceholderText("Drag or type URL  Example: https://www.allrecipes.com/recipe/257938")
 
     def dropEvent(self, event):
         data = event.mimeData()
@@ -132,28 +132,52 @@ class FoodBuddyWidget(QtGui.QWidget):
         self.setWindowIcon(QtGui.QIcon(burgerIcon))
         self.center()
 
+        recipeUrlLabel = QtGui.QLabel("Recipe URL:")
         self.recipeUrl = RecipeUrlWidget()
-        print self.recipeUrl.placeholderText()
-        self.clearButton = QtGui.QPushButton("Clear")     
+        self.clearButton1 = QtGui.QPushButton("Clear")     
+
+        recipeTitleLabel = QtGui.QLabel("Recipe Title:")
+        self.recipeTitle = QtGui.QLineEdit()
+        self.recipeTitle.setPlaceholderText("Example: Chicken Soup")
+        self.clearButton2 = QtGui.QPushButton("Clear")     
+
+        recipeTagsLabel = QtGui.QLabel("Recipe Tags:")
+        self.recipeTags = QtGui.QLineEdit()
+        self.recipeTags.setPlaceholderText("Example: Chicken, tortilla, soup")
+        self.clearButton3 = QtGui.QPushButton("Clear")     
+
+        recipeNotesLabel = QtGui.QLabel("Recipe Notes:")
+        self.recipeNotes = QtGui.QTextEdit()
+        self.recipeNotes.setMinimumHeight(200)
+
         """
-        self.recipeTitle
-        self.recipeNotes
-        self.recipeTags
         self.browseButton
         self.AddButton
         """
         self.statusLabel = StatusLabel()
         self.mainLayout = QtGui.QVBoxLayout()
         self.mainGridLayout = QtGui.QGridLayout()
-        self.mainGridLayout.addWidget(self.recipeUrl, 0, 0)
-        self.mainGridLayout.addWidget(self.clearButton, 0, 1)
-        self.mainGridLayout.addWidget(self.statusLabel, 1, 0)
+        self.mainGridLayout.addWidget(recipeUrlLabel, 0, 0)
+        self.mainGridLayout.addWidget(self.recipeUrl, 0, 1)
+        self.mainGridLayout.addWidget(self.clearButton1, 0, 2)
+        self.mainGridLayout.addWidget(recipeTitleLabel, 1, 0)
+        self.mainGridLayout.addWidget(self.recipeTitle, 1, 1)
+        self.mainGridLayout.addWidget(self.clearButton2, 1, 2)
+        self.mainGridLayout.addWidget(recipeTagsLabel, 2, 0)
+        self.mainGridLayout.addWidget(self.recipeTags, 2, 1)
+        self.mainGridLayout.addWidget(self.clearButton3, 2, 2)
+        self.mainGridLayout.addWidget(recipeNotesLabel, 3, 0, 1, 1)
+        self.mainGridLayout.addWidget(self.recipeNotes, 3, 1, 1, 2)
+
+        #self.mainGridLayout.addWidget(self.statusLabel, 3, 0)
 
         self.mainLayout.addLayout(self.mainGridLayout)
         self.setLayout(self.mainLayout)
 
     def _connectSignals(self):
-        self.clearButton.clicked.connect(self.recipeUrl.clear)
+        self.clearButton1.clicked.connect(self.recipeUrl.clear)
+        self.clearButton2.clicked.connect(self.recipeTitle.clear)
+        self.clearButton3.clicked.connect(self.recipeTags.clear)
 
     def center(self):
         """ Centers GUI in middle of screen """
