@@ -47,14 +47,21 @@ class ErrorMessage(QtGui.QDialog):
         self.okayButton.clicked.connect(self.accept)
 
 
+#class RecipeViewer(QtGui.QWidget):
+
+
 
 class RecipeListWidget(QtGui.QWidget):
+    STYLESHEET = """
+                background-color: #808080;
+                """
 
     def __init__(self, *args, **kwargs):
         super(RecipeListWidget, self).__init__(*args, **kwargs)
         self._setupUI()
 
     def _setupUI(self):
+        self.setStyleSheet(self.STYLESHEET)
         self.listBox = QtGui.QVBoxLayout(self)
         self.setLayout(self.listBox)
 
@@ -79,13 +86,12 @@ class RecipeListWidget(QtGui.QWidget):
 
 class RecipeWidget(QtGui.QWidget):
     STYLESHEET = """
-                background-color: grey;
-                color: white;
-                selection-background-color: white;
-                selection-color: grey;
+                background-color: #FCFDFE;
                 padding: 5px;
                 border-width: 2px;
-                border-style: outset;
+                border-radius: 7px;
+                font: 12px;
+                text-align: center;
                 """
 
     def __init__(self, data={}, *args, **kwargs):
@@ -93,15 +99,29 @@ class RecipeWidget(QtGui.QWidget):
         self.data = data
         self.setStyleSheet(self.STYLESHEET)
         self._setupUI()
-        self.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        self._connectSignals()
 
     def _setupUI(self):
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        self.setMinimumHeight(60)
+        self.setMaximumHeight(60)
+
         title = self.data.get('title', '')
         titleLabel = QtGui.QLabel(title)
         mainLayout = QtGui.QHBoxLayout()
         mainLayout.addWidget(titleLabel)
         self.setLayout(mainLayout)
+
+    def mousePressEvent(self, event):
+        print 'clicked'
+
+    def _connectSignals(self):
+        #self.itemDoubleClicked.connect(self.test)
+        #self.mouseReleaseEvent = self.test()
+        print 'connected'
+
+    def test(self):
+        print "HERE"
 
 
 class BrowseWindow(QtGui.QDialog):
@@ -110,12 +130,20 @@ class BrowseWindow(QtGui.QDialog):
 
     def __init__(self, *args, **kwargs):
         super(BrowseWindow, self).__init__(*args, **kwargs)
+        self.parent = kwargs.get('parent', '') 
         self.setFocus()
         self._setupUI()
         self._connectSignals()
 
     def _setupUI(self):
         self.setWindowTitle('Recipe Browser')
+
+        if self.parent:
+            width = self.parent.geometry().width()
+            height = self.parent.geometry().height()
+            self.resize(width, height)
+        else:
+            self.resize(500, 600)
 
         recipeTagsLabel = QtGui.QLabel("Recipe Tags:")
         self.recipeTags = QtGui.QLineEdit()
@@ -213,7 +241,7 @@ class FoodBuddyWidget(QtGui.QWidget):
         self.show()
 
     def _setupUI(self):
-        self.setGeometry(50, 50, 600, 800)
+        self.setGeometry(50, 50, 500, 600)
         self.setWindowTitle("FoodBuddy")
         burgerIcon = os.path.join(RESOURCE_DIR, 'burger.png')
         self.setWindowIcon(QtGui.QIcon(burgerIcon))
@@ -314,7 +342,7 @@ class FoodBuddyWidget(QtGui.QWidget):
 
     def openRecipeBrowser(self):
         if self.recipeBrowser is None:
-            self.recipeBrowser = BrowseWindow(self) 
+            self.recipeBrowser = BrowseWindow(parent=self) 
             self.recipeBrowser.criteriaChange.connect(self.setBrowserRecipes)
         self.recipeBrowser.show()
         self.recipeBrowser.raise_()
