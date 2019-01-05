@@ -1,1 +1,1 @@
-python "%~dp0\FoodBuddy\main.py"
+start "" pythonw "%~dp0\FoodBuddy\main.py"

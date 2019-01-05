@@ -7,6 +7,8 @@ import requests
 import json
 import pdfkit
 
+DATA_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(DATA_DIR, '..', 'data')
 
 class Recipe(object):
 
@@ -51,16 +53,29 @@ class FoodBuddy(object):
     def __init__(self):
         """
             Validates USERPROFILE variable is set.
-            Creates FoodBuddy/recipes directory. 
-            Creates FoodBuddy/metadata.json file.
+            Creates FoodBuddy/data/recipes directory. 
+            Creates FoodBuddy/data/metadata.json file.
         """
-        self.userProfile = os.environ.get('USERPROFILE', None)
+        '''
+        # OLD implementation, converted to self contained app, keeping this for reference
+
+        if sys.platform.startswith('win'):
+            self.userProfile = os.environ.get('USERPROFILE', None)
+        elif sys.platform.startswith('darwin'):
+            self.userProfile = os.environ.get('HOME', None)
+        else:
+            raise OSError("Could not locate USERPROFILE or HOME environment variable")
+
         self.directory = os.path.join(self.userProfile, 'FoodBuddy')
-        self.recipesDirectory = os.path.join(self.directory, 'recipes')
-        self.metadataDirectory = os.path.join(self.directory, 'metadata.json') 
+        self.recipesDirectory = os.path.join(self.directory, 'data', 'recipes')
+        self.metadataDirectory = os.path.join(self.directory, 'data', 'metadata.json') 
 
         if not self.userProfile:
             raise EnvironmentError('USERPROFILE environment variable does not exist.') 
+        '''
+
+        self.recipesDirectory = os.path.join(DATA_DIR, 'recipes')
+        self.metadataDirectory = os.path.join(DATA_DIR, 'metadata.json') 
 
         if not os.path.exists(self.recipesDirectory):
             os.makedirs(self.recipesDirectory)
