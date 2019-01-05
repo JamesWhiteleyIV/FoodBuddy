@@ -182,7 +182,7 @@ class FoodBuddy(object):
         self._addRecipeFolder(recipe)
         self._addRecipeMetadata(recipe)
 
-        
+
     def getRecipesByTags(self, tags, searchBy='AND'):
         """
             :param tags: list of <str>
@@ -193,20 +193,26 @@ class FoodBuddy(object):
         """
         matches = {}
         tags = [x.lower() for x in tags if x != ''] # force lowercase
-        if not tags:
-            return matches
 
         data = self._loadMetadata()
-        for key, value in data.get('recipes', {}).iteritems():
-            metatags = value.get('tags', [])
+        allrecipes = data.get('recipes', {})
+
+        if tags == []:
+            return allrecipes
+
+        for key, recipe in allrecipes.iteritems():
+            title = recipe.get('title', '')
+            titlesplit = title.split()
+            metatags = recipe.get('tags', [])
             metatags = [x.lower() for x in metatags]
+            metatags += titlesplit
 
             if searchBy == 'AND':
                 if set(tags).issubset(set(metatags)): 
-                    matches[key] = value
+                    matches[key] = recipe
             elif searchBy == 'OR':
                 if any(t in tags for t in metatags):
-                    matches[key] = value
+                    matches[key] = recipe
 
         return matches
 

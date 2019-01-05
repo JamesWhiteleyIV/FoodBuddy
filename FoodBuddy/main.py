@@ -102,7 +102,7 @@ class BrowseWindow(QtGui.QDialog):
         else:
             self.resize(500, 600)
 
-        recipeTagsLabel = QtGui.QLabel("Recipe Tags:")
+        recipeTagsLabel = QtGui.QLabel("Recipe Name/Tags:")
         self.recipeTags = QtGui.QLineEdit()
         self.recipeTags.setPlaceholderText("Example: Chicken, tortilla, soup")
         self.clearButton = QtGui.QPushButton("Clear")     
@@ -301,6 +301,7 @@ class FoodBuddyWidget(QtGui.QWidget):
         if self.recipeBrowser is None:
             self.recipeBrowser = BrowseWindow(parent=self) 
             self.recipeBrowser.criteriaChange.connect(self.setBrowserRecipes)
+        self.recipeBrowser.updateRecipes()
         self.recipeBrowser.show()
         self.recipeBrowser.raise_()
 
@@ -319,6 +320,7 @@ class FoodBuddyWidget(QtGui.QWidget):
             for code, data in recipes.iteritems():
                 recipeItem = RecipeItem(data) 
                 self.recipeBrowser.recipeList.addItem(recipeItem)
+            self.recipeBrowser.recipeList.sortItems()
 
 
     def addRecipe(self):
