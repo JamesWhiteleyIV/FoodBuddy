@@ -58,15 +58,19 @@ class RecipeListWidget(QtGui.QListWidget):
     def recipeItemDoubleClicked(self):
         data = self.currentItem().data
         pdfpath = data.get('pdf', '')
+        notespath = data.get('notes', '')
         if sys.platform.startswith('win'):
             cmd = 'start "" "{}"'.format(pdfpath)
+            notescmd  = 'start "" "{}"'.format(notespath)
         elif sys.platform.startswith('darwin'):
             cmd = 'open "{}"'.format(pdfpath)
+            notescmd  = 'open "{}"'.format(notespath)
         else:
             raise OSError("This platform is not supported.")
         os.system(cmd)
+        os.system(notescmd)
 
-   
+  
 class RecipeItem(QtGui.QListWidgetItem):
 
     def __init__(self, data=None, *args, **kwargs):
@@ -89,15 +93,12 @@ class BrowseWindow(QtGui.QDialog):
     def _setupUI(self):
         self.setWindowTitle('Recipe Browser')
 
-        '''
         if self.parent:
             width = self.parent.geometry().width()
             height = self.parent.geometry().height()
             self.resize(width, height)
         else:
             self.resize(500, 600)
-        '''
-        self.resize(500, 800)
 
         recipeTagsLabel = QtGui.QLabel("Recipe Tags:")
         self.recipeTags = QtGui.QLineEdit()
@@ -130,7 +131,8 @@ class BrowseWindow(QtGui.QDialog):
         self.clearButton.clicked.connect(self.recipeTags.clear)
         self.recipeTags.textChanged.connect(self.updateRecipes)
         self.andButton.toggled.connect(self.updateRecipes)
-        self.recipeList.itemDoubleClicked.connect(self.recipeList.recipeItemClicked)
+        self.recipeList.itemDoubleClicked.connect(self.recipeList.recipeItemDoubleClicked)
+        #self.recipeList.itemClicked.connect(self.recipeList.recipeItemClicked)
 
     def updateRecipes(self):
         self.criteriaChange.emit()
