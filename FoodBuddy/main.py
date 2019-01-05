@@ -1,7 +1,8 @@
 import sys
 import os
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui, QtCore, QtWebKit
 import api
+import subprocess
 
 
 RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -47,81 +48,31 @@ class ErrorMessage(QtGui.QDialog):
         self.okayButton.clicked.connect(self.accept)
 
 
-#class RecipeViewer(QtGui.QWidget):
-
-
-
-class RecipeListWidget(QtGui.QWidget):
-    STYLESHEET = """
-                background-color: #808080;
-                """
-
+class RecipeListWidget(QtGui.QListWidget):
+    '''
+    List of RecipeItem's
+    '''
     def __init__(self, *args, **kwargs):
         super(RecipeListWidget, self).__init__(*args, **kwargs)
-        self._setupUI()
 
-    def _setupUI(self):
-        self.setStyleSheet(self.STYLESHEET)
-        self.listBox = QtGui.QVBoxLayout(self)
-        self.setLayout(self.listBox)
+    def recipeItemDoubleClicked(self):
+        data = self.currentItem().data
+        pdfpath = data.get('pdf', '')
+        if sys.platform.startswith('win'):
+            cmd = 'start "" "{}"'.format(pdfpath)
+        elif sys.platform.startswith('darwin'):
+            cmd = 'open "{}"'.format(pdfpath)
+        else:
+            raise OSError("This platform is not supported.")
+        os.system(cmd)
 
-        self.scroll = QtGui.QScrollArea() 
-        self.listBox.addWidget(self.scroll)
-        self.scroll.setWidgetResizable(True)
-        self.scrollContent = QtGui.QWidget(self.scroll)
+   
+class RecipeItem(QtGui.QListWidgetItem):
 
-        self.scrollLayout = QtGui.QVBoxLayout(self.scrollContent)
-        self.scrollContent.setLayout(self.scrollLayout)
-        self.scroll.setWidget(self.scrollContent)
-        self.scrollLayout.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
-
-    def addRecipeWidget(self, widget):
-        self.scrollLayout.addWidget(widget)
-        self.scroll.setWidget(self.scrollContent)
-
-    def clearRecipeWidgets(self):
-        for i in reversed(range(self.scrollLayout.count())): 
-            self.scrollLayout.itemAt(i).widget().setParent(None)
-
-
-class RecipeWidget(QtGui.QWidget):
-    STYLESHEET = """
-                background-color: #FCFDFE;
-                padding: 5px;
-                border-width: 2px;
-                border-radius: 7px;
-                font: 12px;
-                text-align: center;
-                """
-
-    def __init__(self, data={}, *args, **kwargs):
-        super(RecipeWidget, self).__init__(*args, **kwargs)
+    def __init__(self, data=None, *args, **kwargs):
+        super(RecipeItem, self).__init__(*args, **kwargs)
         self.data = data
-        self.setStyleSheet(self.STYLESHEET)
-        self._setupUI()
-        self._connectSignals()
-
-    def _setupUI(self):
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-        self.setMinimumHeight(60)
-        self.setMaximumHeight(60)
-
-        title = self.data.get('title', '')
-        titleLabel = QtGui.QLabel(title)
-        mainLayout = QtGui.QHBoxLayout()
-        mainLayout.addWidget(titleLabel)
-        self.setLayout(mainLayout)
-
-    def mousePressEvent(self, event):
-        print 'clicked'
-
-    def _connectSignals(self):
-        #self.itemDoubleClicked.connect(self.test)
-        #self.mouseReleaseEvent = self.test()
-        print 'connected'
-
-    def test(self):
-        print "HERE"
+        self.setText(data.get('title', ''))
 
 
 class BrowseWindow(QtGui.QDialog):
@@ -138,12 +89,15 @@ class BrowseWindow(QtGui.QDialog):
     def _setupUI(self):
         self.setWindowTitle('Recipe Browser')
 
+        '''
         if self.parent:
             width = self.parent.geometry().width()
             height = self.parent.geometry().height()
             self.resize(width, height)
         else:
             self.resize(500, 600)
+        '''
+        self.resize(500, 800)
 
         recipeTagsLabel = QtGui.QLabel("Recipe Tags:")
         self.recipeTags = QtGui.QLineEdit()
@@ -176,6 +130,7 @@ class BrowseWindow(QtGui.QDialog):
         self.clearButton.clicked.connect(self.recipeTags.clear)
         self.recipeTags.textChanged.connect(self.updateRecipes)
         self.andButton.toggled.connect(self.updateRecipes)
+        self.recipeList.itemDoubleClicked.connect(self.recipeList.recipeItemClicked)
 
     def updateRecipes(self):
         self.criteriaChange.emit()
@@ -213,7 +168,6 @@ class StatusLabel(QtGui.QWidget):
             self.timeoutTimer.start(timeout)
 
 
-# TODO: make it so you can drag in word, txt, pdf file
 class RecipeUrlWidget(QtGui.QLineEdit):
 
     def __init__(self):
@@ -351,17 +305,17 @@ class FoodBuddyWidget(QtGui.QWidget):
         if self.recipeBrowser:
             tags = str(self.recipeBrowser.recipeTags.text())
             tags = [x.strip() for x in tags.split(',')]
+
             if self.recipeBrowser.andButton.isChecked():
                 searchBy = 'AND'
-                print "AND"
             else:
                 searchBy = 'OR'
-                print "OR"
             recipes = self.foodBuddy.getRecipesByTags(tags, searchBy)
-            self.recipeBrowser.recipeList.clearRecipeWidgets()
+
+            self.recipeBrowser.recipeList.clear()
             for code, data in recipes.iteritems():
-                recipeWidget = RecipeWidget(data=data) 
-                self.recipeBrowser.recipeList.addRecipeWidget(recipeWidget)
+                recipeItem = RecipeItem(data) 
+                self.recipeBrowser.recipeList.addItem(recipeItem)
 
 
     def addRecipe(self):
