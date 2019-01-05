@@ -177,7 +177,9 @@ class FoodBuddy(object):
             OR will match a recipe if it contains any of the tags in the tags list.
         """
         matches = {}
-        tags = [x.lower() for x in tags] # force lowercase
+        tags = [x.lower() for x in tags if x != ''] # force lowercase
+        if not tags:
+            return matches
 
         data = self._loadMetadata()
         for key, value in data.get('recipes', {}).iteritems():
@@ -188,7 +190,7 @@ class FoodBuddy(object):
                 if set(tags).issubset(set(metatags)): 
                     matches[key] = value
             elif searchBy == 'OR':
-                if any(t in max(tags,metatags,key=len) for t in min(tags,metatags,key=len)):
+                if any(t in tags for t in metatags):
                     matches[key] = value
 
         return matches

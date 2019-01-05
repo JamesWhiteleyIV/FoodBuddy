@@ -1,9 +1,7 @@
 import sys
 import os
-from PyQt4 import QtGui, QtCore, QtWebKit
+from PyQt4 import QtGui, QtCore
 import api
-import subprocess
-
 
 RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESOURCE_DIR = os.path.join(RESOURCE_DIR, 'resources')
@@ -23,8 +21,8 @@ class ErrorMessage(QtGui.QDialog):
         self.errorTextWidget.setPlainText(self.text)
 
         self.copyButton = QtGui.QPushButton("Copy Error")
-        self.copyButton.setFixedWidth(100)
         self.okayButton = QtGui.QPushButton("Ok")
+        self.copyButton.setFixedWidth(100)
         self.okayButton.setFixedWidth(100)
 
         mainLayout = QtGui.QGridLayout()
@@ -59,6 +57,7 @@ class RecipeListWidget(QtGui.QListWidget):
         data = self.currentItem().data
         pdfpath = data.get('pdf', '')
         notespath = data.get('notes', '')
+
         if sys.platform.startswith('win'):
             cmd = 'start "" "{}"'.format(pdfpath)
             notescmd  = 'start "" "{}"'.format(notespath)
@@ -67,8 +66,11 @@ class RecipeListWidget(QtGui.QListWidget):
             notescmd  = 'open "{}"'.format(notespath)
         else:
             raise OSError("This platform is not supported.")
-        os.system(cmd)
-        os.system(notescmd)
+
+        if pdfpath and os.path.exists(pdfpath):
+            os.system(cmd)
+        if notespath and os.path.exists(notespath):
+            os.system(notescmd)
 
   
 class RecipeItem(QtGui.QListWidgetItem):
@@ -132,7 +134,6 @@ class BrowseWindow(QtGui.QDialog):
         self.recipeTags.textChanged.connect(self.updateRecipes)
         self.andButton.toggled.connect(self.updateRecipes)
         self.recipeList.itemDoubleClicked.connect(self.recipeList.recipeItemDoubleClicked)
-        #self.recipeList.itemClicked.connect(self.recipeList.recipeItemClicked)
 
     def updateRecipes(self):
         self.criteriaChange.emit()
