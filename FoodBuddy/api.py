@@ -56,24 +56,6 @@ class FoodBuddy(object):
             Creates FoodBuddy/data/recipes directory. 
             Creates FoodBuddy/data/metadata.json file.
         """
-        '''
-        # OLD implementation, converted to self contained app, keeping this for reference
-
-        if sys.platform.startswith('win'):
-            self.userProfile = os.environ.get('USERPROFILE', None)
-        elif sys.platform.startswith('darwin'):
-            self.userProfile = os.environ.get('HOME', None)
-        else:
-            raise OSError("Could not locate USERPROFILE or HOME environment variable")
-
-        self.directory = os.path.join(self.userProfile, 'FoodBuddy')
-        self.recipesDirectory = os.path.join(self.directory, 'data', 'recipes')
-        self.metadataDirectory = os.path.join(self.directory, 'data', 'metadata.json') 
-
-        if not self.userProfile:
-            raise EnvironmentError('USERPROFILE environment variable does not exist.') 
-        '''
-
         self.recipesDirectory = os.path.join(DATA_DIR, 'recipes')
         self.metadataDirectory = os.path.join(DATA_DIR, 'metadata.json') 
 
@@ -91,7 +73,14 @@ class FoodBuddy(object):
             :param url: string 
             :param pdfpath: path to pdf out 
         """
-        config = pdfkit.configuration(wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe") 
+        if sys.platform.startswith('win'):
+            path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe") 
+        elif sys.platform.startswith('darwin'):
+            path = r"/usr/local/bin/wkhtmltopdf"
+        else:
+            raise OSError("Could not locate USERPROFILE or HOME environment variable")
+
+        config = pdfkit.configuration(wkhtmltopdf=path)
         pdfkit.from_url(url, pdfpath, configuration=config)
 
 
