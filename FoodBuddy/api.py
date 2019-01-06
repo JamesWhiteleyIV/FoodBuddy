@@ -3,12 +3,13 @@ import sys
 import random
 import string
 import datetime
-import requests
 import json
 import pdfkit
 
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(DATA_DIR, '..', 'data')
+LOG_FILE = os.path.join(DATA_DIR, 'log.txt')
+sys.stdout = open(LOG_FILE, "w")
 
 class Recipe(object):
 
@@ -74,7 +75,7 @@ class FoodBuddy(object):
             :param pdfpath: path to pdf out 
         """
         if sys.platform.startswith('win'):
-            path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe") 
+            path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe" 
         elif sys.platform.startswith('darwin'):
             path = r"/usr/local/bin/wkhtmltopdf"
         else:
@@ -189,7 +190,7 @@ class FoodBuddy(object):
         if tags == []:
             return allrecipes
 
-        for key, recipe in allrecipes.iteritems():
+        for key, recipe in allrecipes.items():
             title = recipe.get('title', '')
             titlesplit = title.split()
             metatags = recipe.get('tags', [])

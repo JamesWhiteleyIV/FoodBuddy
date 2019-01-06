@@ -1,12 +1,13 @@
 import sys
 import os
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui  
 import api
+import traceback
 
 RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESOURCE_DIR = os.path.join(RESOURCE_DIR, 'resources')
 
-class ErrorMessage(QtGui.QDialog):
+class ErrorMessage(QtWidgets.QDialog):
 
     def __init__(self, title, text, copyText=None, icon=None, parent=None):
         super(ErrorMessage, self).__init__(parent)
@@ -17,18 +18,18 @@ class ErrorMessage(QtGui.QDialog):
 
     def _setupUI(self):
         self.setMinimumWidth(400)
-        self.errorTextWidget = QtGui.QPlainTextEdit()
+        self.errorTextWidget = QtWidgets.QPlainTextEdit()
         self.errorTextWidget.setPlainText(self.text)
 
-        self.copyButton = QtGui.QPushButton("Copy Error")
-        self.okayButton = QtGui.QPushButton("Ok")
+        self.copyButton = QtWidgets.QPushButton("Copy Error")
+        self.okayButton = QtWidgets.QPushButton("Ok")
         self.copyButton.setFixedWidth(100)
         self.okayButton.setFixedWidth(100)
 
-        mainLayout = QtGui.QGridLayout()
-        self.textLayout = QtGui.QHBoxLayout()
+        mainLayout = QtWidgets.QGridLayout()
+        self.textLayout = QtWidgets.QHBoxLayout()
         self.textLayout.addWidget(self.errorTextWidget)
-        self.buttonLayout = QtGui.QHBoxLayout()
+        self.buttonLayout = QtWidgets.QHBoxLayout()
         self.buttonLayout.addStretch(0)
         self.buttonLayout.addWidget(self.copyButton)
         self.buttonLayout.addWidget(self.okayButton)
@@ -41,12 +42,12 @@ class ErrorMessage(QtGui.QDialog):
 
     def _connectSignals(self):
         def copyError():
-            QtGui.QApplication.clipboard().setText(self.copyText)
+            QtWidgets.QApplication.clipboard().setText(self.copyText)
         self.copyButton.clicked.connect(copyError)
         self.okayButton.clicked.connect(self.accept)
 
 
-class RecipeListWidget(QtGui.QListWidget):
+class RecipeListWidget(QtWidgets.QListWidget):
     '''
     List of RecipeItem's
     '''
@@ -73,7 +74,7 @@ class RecipeListWidget(QtGui.QListWidget):
             os.system(notescmd)
 
   
-class RecipeItem(QtGui.QListWidgetItem):
+class RecipeItem(QtWidgets.QListWidgetItem):
 
     def __init__(self, data=None, *args, **kwargs):
         super(RecipeItem, self).__init__(*args, **kwargs)
@@ -81,7 +82,7 @@ class RecipeItem(QtGui.QListWidgetItem):
         self.setText(data.get('title', ''))
 
 
-class BrowseWindow(QtGui.QDialog):
+class BrowseWindow(QtWidgets.QDialog):
     """ Used to browse recipes """
     criteriaChange = QtCore.pyqtSignal()
 
@@ -102,21 +103,21 @@ class BrowseWindow(QtGui.QDialog):
         else:
             self.resize(500, 600)
 
-        recipeTagsLabel = QtGui.QLabel("Recipe Name/Tags:")
-        self.recipeTags = QtGui.QLineEdit()
+        recipeTagsLabel = QtWidgets.QLabel("Recipe Name/Tags:")
+        self.recipeTags = QtWidgets.QLineEdit()
         self.recipeTags.setPlaceholderText("Example: Chicken, tortilla, soup")
-        self.clearButton = QtGui.QPushButton("Clear")     
+        self.clearButton = QtWidgets.QPushButton("Clear")     
 
-        andLabel = QtGui.QLabel("Only show recipes that include ALL tags")
-        orLabel = QtGui.QLabel("Show recipes that include ANY tags")
-        self.orButton = QtGui.QRadioButton()
-        self.andButton = QtGui.QRadioButton()
+        andLabel = QtWidgets.QLabel("Only show recipes that include ALL tags")
+        orLabel = QtWidgets.QLabel("Show recipes that include ANY tags")
+        self.orButton = QtWidgets.QRadioButton()
+        self.andButton = QtWidgets.QRadioButton()
         self.andButton.setChecked(True)
 
         self.recipeList = RecipeListWidget(self)
 
-        self.mainLayout = QtGui.QVBoxLayout()
-        self.mainGridLayout = QtGui.QGridLayout()
+        self.mainLayout = QtWidgets.QVBoxLayout()
+        self.mainGridLayout = QtWidgets.QGridLayout()
         self.mainGridLayout.addWidget(andLabel, 0, 0)
         self.mainGridLayout.addWidget(self.andButton, 0, 1)
         self.mainGridLayout.addWidget(orLabel, 1, 0)
@@ -139,18 +140,18 @@ class BrowseWindow(QtGui.QDialog):
         self.criteriaChange.emit()
 
 
-class StatusLabel(QtGui.QWidget):
+class StatusLabel(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(StatusLabel, self).__init__()
         self.timeoutTimer = QtCore.QTimer(parent=self)
         self.timeoutTimer.setSingleShot(True)
 
-        self.textWidget = QtGui.QLabel()
+        self.textWidget = QtWidgets.QLabel()
         self.textWidget.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
         self.textWidget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
         self.textWidget.setOpenExternalLinks(True)
 
-        mainLayout = QtGui.QHBoxLayout() 
+        mainLayout = QtWidgets.QHBoxLayout() 
         mainLayout.addWidget(self.textWidget)
         self.setLayout(mainLayout)
 
@@ -171,7 +172,7 @@ class StatusLabel(QtGui.QWidget):
             self.timeoutTimer.start(timeout)
 
 
-class RecipeUrlWidget(QtGui.QLineEdit):
+class RecipeUrlWidget(QtWidgets.QLineEdit):
 
     def __init__(self):
         super(RecipeUrlWidget, self).__init__()
@@ -186,7 +187,7 @@ class RecipeUrlWidget(QtGui.QLineEdit):
             self.setText(filepath)
 
 
-class FoodBuddyWidget(QtGui.QWidget):
+class FoodBuddyWidget(QtWidgets.QWidget):
 
     def __init__(self):
         super(FoodBuddyWidget, self).__init__()
@@ -204,39 +205,39 @@ class FoodBuddyWidget(QtGui.QWidget):
         self.setWindowIcon(QtGui.QIcon(burgerIcon))
         self.center()
 
-        recipeUrlLabel = QtGui.QLabel("Recipe URL:")
+        recipeUrlLabel = QtWidgets.QLabel("Recipe URL:")
         self.recipeUrl = RecipeUrlWidget()
-        self.clearButton1 = QtGui.QPushButton("Clear")     
+        self.clearButton1 = QtWidgets.QPushButton("Clear")     
 
-        recipeTitleLabel = QtGui.QLabel("Recipe Title:")
-        self.recipeTitle = QtGui.QLineEdit()
+        recipeTitleLabel = QtWidgets.QLabel("Recipe Title:")
+        self.recipeTitle = QtWidgets.QLineEdit()
         self.recipeTitle.setPlaceholderText("Example: Chicken Soup")
-        self.clearButton2 = QtGui.QPushButton("Clear")     
+        self.clearButton2 = QtWidgets.QPushButton("Clear")     
 
-        recipeTagsLabel = QtGui.QLabel("Recipe Tags:")
-        self.recipeTags = QtGui.QLineEdit()
+        recipeTagsLabel = QtWidgets.QLabel("Recipe Tags:")
+        self.recipeTags = QtWidgets.QLineEdit()
         self.recipeTags.setPlaceholderText("Example: Chicken, tortilla, soup")
-        self.clearButton3 = QtGui.QPushButton("Clear")     
+        self.clearButton3 = QtWidgets.QPushButton("Clear")     
 
-        recipeNotesLabel = QtGui.QLabel("Recipe Notes:")
-        self.recipeNotes = QtGui.QTextEdit()
+        recipeNotesLabel = QtWidgets.QLabel("Recipe Notes:")
+        self.recipeNotes = QtWidgets.QTextEdit()
         self.recipeNotes.setMinimumHeight(200)
         recipeNotesLabel.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
 
-        self.browseButton = QtGui.QPushButton("Browse Recipes")     
+        self.browseButton = QtWidgets.QPushButton("Browse Recipes")     
         self.browseButton.setMaximumWidth(100)
-        self.addButton = QtGui.QPushButton("Add Recipe")     
+        self.addButton = QtWidgets.QPushButton("Add Recipe")     
         self.addButton.setMaximumWidth(100)
         self.addButton.setEnabled(False)
 
         self.statusLabel = StatusLabel()
-        self.mainLayout = QtGui.QVBoxLayout()
-        self.buttonLayout = QtGui.QHBoxLayout()
+        self.mainLayout = QtWidgets.QVBoxLayout()
+        self.buttonLayout = QtWidgets.QHBoxLayout()
         self.buttonLayout.addStretch()
         self.buttonLayout.addWidget(self.browseButton)
         self.buttonLayout.addWidget(self.addButton)
 
-        self.mainGridLayout = QtGui.QGridLayout()
+        self.mainGridLayout = QtWidgets.QGridLayout()
         self.mainGridLayout.addWidget(recipeUrlLabel, 0, 0)
         self.mainGridLayout.addWidget(self.recipeUrl, 0, 1)
         self.mainGridLayout.addWidget(self.clearButton1, 0, 2)
@@ -267,8 +268,8 @@ class FoodBuddyWidget(QtGui.QWidget):
     def center(self):
         """ Centers GUI in middle of screen """
         frameGm = self.frameGeometry()
-        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
-        centerPoint = QtGui.QApplication.desktop().screenGeometry(screen).center()
+        screen = QtWidgets.QApplication.desktop().screenNumber(QtWidgets.QApplication.desktop().cursor().pos())
+        centerPoint = QtWidgets.QApplication.desktop().screenGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
 
@@ -317,7 +318,7 @@ class FoodBuddyWidget(QtGui.QWidget):
             recipes = self.foodBuddy.getRecipesByTags(tags, searchBy)
 
             self.recipeBrowser.recipeList.clear()
-            for code, data in recipes.iteritems():
+            for code, data in recipes.items():
                 recipeItem = RecipeItem(data) 
                 self.recipeBrowser.recipeList.addItem(recipeItem)
             self.recipeBrowser.recipeList.sortItems()
@@ -333,9 +334,10 @@ class FoodBuddyWidget(QtGui.QWidget):
             self.updateStatus(
                     "Error adding recipe",
                     styling='background: red;')
+            stacktrace = traceback.format_exc()
             message = ErrorMessage(
                         "Error",
-                        "The following error occurred: {}".format(err),
+                        "The following error occurred:\n{}".format(stacktrace),
                         parent=self)
             message.exec_()
             self.addButton.setEnabled(True)
@@ -347,7 +349,7 @@ class FoodBuddyWidget(QtGui.QWidget):
             self.addButton.setEnabled(True)
 
 def run():
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     GUI = FoodBuddyWidget()
     sys.exit(app.exec_())
 
