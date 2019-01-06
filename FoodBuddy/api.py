@@ -143,8 +143,8 @@ class FoodBuddy(object):
                 'thumbnail': <path to thumbnail>
             }
         """
-        pdfPath = os.path.join(self.recipesDirectory, recipe.id, 'recipe.pdf')
-        notesPath = os.path.join(self.recipesDirectory, recipe.id, 'notes.txt')
+        pdfPath = os.path.join(recipe.id, 'recipe.pdf')
+        notesPath = os.path.join(recipe.id, 'notes.txt')
 
         data = self._loadMetadata()
         if recipe.id in data['recipes']:

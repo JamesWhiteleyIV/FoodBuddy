@@ -6,6 +6,8 @@ import traceback
 
 RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESOURCE_DIR = os.path.join(RESOURCE_DIR, 'resources')
+DATA_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(DATA_DIR, '..', 'data')
 
 class ErrorMessage(QtWidgets.QDialog):
 
@@ -57,7 +59,9 @@ class RecipeListWidget(QtWidgets.QListWidget):
     def recipeItemDoubleClicked(self):
         data = self.currentItem().data
         pdfpath = data.get('pdf', '')
+        pdfpath = os.path.join(DATA_DIR, 'recipes', pdfpath)
         notespath = data.get('notes', '')
+        notespath = os.path.join(DATA_DIR, 'recipes', notespath)
 
         if sys.platform.startswith('win'):
             cmd = 'start "" "{}"'.format(pdfpath)
