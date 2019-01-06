@@ -1,8 +1,5 @@
 # NOTE: FoodBuddy has been tested using the following on Windows 10 and Mac OS version 10.12, 10.13, 10.14
 
-# TODO: make installer for windows and mac, rm pyqt folder since using pip now
-# TODO: change launcher to use 'py' rather that 'python' for python3
-
 # Install python3 and add python3 scripts directory to path (if not already there)
 https://www.python.org/downloads/
 
