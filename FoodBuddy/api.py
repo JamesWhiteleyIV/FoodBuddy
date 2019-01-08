@@ -4,7 +4,8 @@ import random
 import string
 import datetime
 import json
-import pdfkit
+import pathlib
+import shutil
 
 DATA_DIR = os.path.join(os.path.abspath(__file__), '..', 'data')
 RECIPES_DIR = os.path.join(DATA_DIR, 'recipes')
@@ -25,7 +26,7 @@ class Recipe(object):
             :param thumbnail: <str> path to thumbnail image
         """
         self.id = self._generateRecipeID()
-        self.thumbnail = thumbnail
+        self.thumbnail = pathlib.path(thumbnail)
         print(thumbnail)
         print(type(thumbnail))
         self.title = title 
@@ -42,12 +43,10 @@ class Recipe(object):
 
     def _generateRecipeID(self):
         """
-            Return a random 10 digit string [a-Z0-9].
+        Returns next highest available number in recipes dir.
         """
-        return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(10)]) 
-
-    def generateNewID(self):
-        self.id = self._generateRecipeID()
+        nextRecipeID = max([x for x in os.listdir(RECIPES_DIR)]) + 1
+        return str(nextRecipeID)
 
 
 class FoodBuddy(object):
@@ -79,22 +78,6 @@ class FoodBuddy(object):
                 fp.write('')
  
 
-    def _urlToPdf(self, url, pdfpath):
-        """
-            :param url: string 
-            :param pdfpath: path to pdf out 
-        """
-        if sys.platform.startswith('win'):
-            path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe" 
-        elif sys.platform.startswith('darwin'):
-            path = r"/usr/local/bin/wkhtmltopdf"
-        else:
-            raise OSError("Could not locate USERPROFILE or HOME environment variable")
-
-        config = pdfkit.configuration(wkhtmltopdf=path)
-        pdfkit.from_url(url, pdfpath, configuration=config)
-
-
     def _addRecipeFolder(self, recipe):
         """
             :param recipe: Recipe object
@@ -103,27 +86,19 @@ class FoodBuddy(object):
             Create pdf from URL in directory.
             Create txt file from notes in directory.
         """
-        recipePath = os.path.join(self.recipesDirectory, recipe.id) 
-        retries = 0
-        while os.path.exists(recipePath) and retries < 20:
-            recipe.generateNewID()
-            retries += 1
+        recipePath = os.path.join(RECIPES_DIR, recipe.id) 
 
         if os.path.exists(recipePath):
-            raise OSError("Could not generate a unique ID for recipe.")
+            raise OSError("Conflicting ID for recipe.")
 
         os.makedirs(recipePath)
 
-        pdfPath = os.path.join(recipePath, 'recipe.pdf')
-        self._urlToPdf(recipe.url, pdfPath)
+        thumbPath = os.path.join(recipePath, recipe.thumbnail.name)
+        shutil.copy2(recipe.thumbnail, thumbPath)
 
         notesPath = os.path.join(recipePath, 'notes.txt')
         with open(notesPath, 'w') as fp:
             fp.write(recipe.notes)
-
-        # TODO: setup thumbnail support
-        #if recipe.thumbnail:
-        #     copy from added path --> <recipe ID>/thumbnail.<ext>
 
 
     # TODO: update how you add meta data
@@ -132,7 +107,7 @@ class FoodBuddy(object):
             Loads metadata.json into dictionary and returns it.
             Raises IOError if something went wrong loading the file.
         """
-        with open(self.metadataDirectory, 'r') as fp:
+        with open(METADATA_FILE, 'r') as fp:
             data = json.load(fp)
         
         if not data:
@@ -149,12 +124,12 @@ class FoodBuddy(object):
             <ID> : {
                 'title': <title>,
                 'tags': [<tag1>, <tag2>, ... ],
-                'pdf': <path to pdf>,
+                'thumb': <path to thumb>,
                 'notes': <path to notes>,
-                'thumbnail': <path to thumbnail>
+                'created': <datetime fo creation>,
             }
         """
-        pdfPath = os.path.join(recipe.id, 'recipe.pdf')
+        thumbPath = os.path.join(recipe.id, recipe.thumbnail.name)
         notesPath = os.path.join(recipe.id, 'notes.txt')
 
         data = self._loadMetadata()
@@ -164,12 +139,12 @@ class FoodBuddy(object):
         data['recipes'][recipe.id] = {
                 'title': recipe.title,
                 'tags': recipe.tags,
-                'pdf': pdfPath, 
                 'notes': notesPath, 
-                'thumbnail': recipe.thumbnail,
+                'thumb': recipe.thumbnail,
+                'created': datetime.datetime.now()
                 }
 
-        with open(self.metadataDirectory, 'w') as fp:
+        with open(METADATA_FILE, 'w') as fp:
             json.dump(data, fp, indent=4)
 
 
@@ -187,9 +162,23 @@ class FoodBuddy(object):
     def updateRecipe(self):
         pass
 
-    # TODO:
-    def deleteRecipe(self):
-        pass
+    def deleteRecipe(self, recipeID):
+        """
+        Removes recipe from metadata.json. 
+        Deletes recipe folder.
+
+        Returns True on success, else False.
+        """
+        data = self._loadMetadata()
+        data['recipes'].pop(recipeID, None)
+
+        for id_ in os.listdir(RECIPES_DIR):
+            if id_ == recipeID:
+                path = os.path.join(RECIPES_DIR, id_)
+                shutil.rmtree(path)
+                return True
+        
+        return False
 
 
     def getRecipesByTags(self, tags, searchBy='AND'):
@@ -224,10 +213,6 @@ class FoodBuddy(object):
                     matches[key] = recipe
 
         return matches
-
-
-
-        
 
 
 

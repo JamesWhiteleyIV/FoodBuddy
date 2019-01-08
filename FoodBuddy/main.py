@@ -9,12 +9,7 @@ import re
 
 RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESOURCE_DIR = os.path.join(RESOURCE_DIR, 'resources')
-# TODO: add all this to init of api?
-'''
-DATA_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(DATA_DIR, '..', 'data')
-TEMP_DIR = os.path.join(DATA_DIR, 'temp')
-'''
+
 
 class ErrorMessage(QtWidgets.QDialog):
 
@@ -56,6 +51,7 @@ class ErrorMessage(QtWidgets.QDialog):
         self.okayButton.clicked.connect(self.accept)
 
 
+# TODO: rather than open file, create a new widget to view just by clicking on the recipe in browser!
 class RecipeListWidget(QtWidgets.QListWidget):
     '''
     List of RecipeItem's
@@ -217,7 +213,7 @@ class RecipeThumbnailWidget(QtWidgets.QWidget):
 
     def saveThumbToTemp(self, path):
         name, ext = os.path.splitext(path)
-        self.path = os.path.join(api.TEMP_DIR, 'temp'+ext)
+        self.path = os.path.join(api.TEMP_DIR, 'thumb'+ext)
         opener = urllib.request.build_opener()
         opener.addheaders = [('User-agent', 'Mozilla/5.0')]
         urllib.request.install_opener(opener)
