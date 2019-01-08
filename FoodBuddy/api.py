@@ -6,39 +6,39 @@ import datetime
 import json
 import pdfkit
 
-DATA_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(DATA_DIR, '..', 'data')
+DATA_DIR = os.path.join(os.path.abspath(__file__), '..', 'data')
+RECIPES_DIR = os.path.join(DATA_DIR, 'recipes')
+TEMP_DIR = os.path.join(DATA_DIR, 'temp')
 LOG_FILE = os.path.join(DATA_DIR, 'log.txt')
+METADATA_FILE = os.path.join(DATA_DIR, 'metadata.json')
 #sys.stdout = open(LOG_FILE, "w")
 #TODO uncomment above?
 
 class Recipe(object):
 
-    def __init__(self, url, title, tags, notes="", thumbnail=None):
+    def __init__(self, thumbnail, title, tags, notes=""):
         """
-            :param url: <str>
+            :param thumbnail: <str> path to thumbnail
             :param title: <str>
             :param tags: list of <str> 
             :param notes: <str> 
             :param thumbnail: <str> path to thumbnail image
         """
         self.id = self._generateRecipeID()
-        self.url = url
+        self.thumbnail = thumbnail
+        print(thumbnail)
+        print(type(thumbnail))
         self.title = title 
         self.tags = tags
         self.notes = notes
-        self.thumbnail = thumbnail
         self._validate()
 
     def _validate(self):
-        if not self.url or not self.title or not self.tags: 
-            raise ValueError("A recipe must have url, title, and at least one tag")
-
         if not isinstance(self.tags, list):
-            raise ValueError("A recipe must have url, title, and at least one tag")
+            raise ValueError("A recipe must have a title, and at least one tag")
     
         if len(self.tags) < 1:
-            raise ValueError("A recipe must have url, title, and at least one tag")
+            raise ValueError("A recipe must have a title, and at least one tag")
 
     def _generateRecipeID(self):
         """
@@ -54,22 +54,30 @@ class FoodBuddy(object):
 
     def __init__(self):
         """
-            Validates USERPROFILE variable is set.
+            Creates FoodBuddy/data directory. 
+            Creates FoodBuddy/data/temp directory. 
             Creates FoodBuddy/data/recipes directory. 
             Creates FoodBuddy/data/metadata.json file.
+            Creates FoodBuddy/data/log.txt file.
         """
-        self.recipesDirectory = os.path.join(DATA_DIR, 'recipes')
-        self.metadataDirectory = os.path.join(DATA_DIR, 'metadata.json') 
-        # TODO: init temp dir
+        if not os.path.exists(DATA_DIR):
+            os.makedirs(DATA_DIR)
 
-        if not os.path.exists(self.recipesDirectory):
-            os.makedirs(self.recipesDirectory)
+        if not os.path.exists(TEMP_DIR):
+            os.makedirs(TEMP_DIR)
 
-        if not os.path.exists(self.metadataDirectory):
-            with open(self.metadataDirectory, 'w') as fp:
+        if not os.path.exists(RECIPES_DIR):
+            os.makedirs(RECIPES_DIR)
+
+        if not os.path.exists(METADATA_FILE):
+            with open(METADATA_FILE, 'w') as fp:
                 data = {"recipes": {}}
                 json.dump(data, fp, indent=4)
 
+        if not os.path.exists(LOG_FILE):
+            with open(LOG_FILE, 'w') as fp:
+                fp.write('')
+ 
 
     def _urlToPdf(self, url, pdfpath):
         """

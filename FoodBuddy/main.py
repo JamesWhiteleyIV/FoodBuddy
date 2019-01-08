@@ -6,12 +6,15 @@ import traceback
 import urllib.request
 import re
 
-# TODO: add all this to init of api?
+
 RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESOURCE_DIR = os.path.join(RESOURCE_DIR, 'resources')
+# TODO: add all this to init of api?
+'''
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(DATA_DIR, '..', 'data')
 TEMP_DIR = os.path.join(DATA_DIR, 'temp')
+'''
 
 class ErrorMessage(QtWidgets.QDialog):
 
@@ -64,9 +67,9 @@ class RecipeListWidget(QtWidgets.QListWidget):
         # TODO: use api to open so you don't need to know paths ??
         data = self.currentItem().data
         pdfpath = data.get('pdf', '')
-        pdfpath = os.path.join(DATA_DIR, 'recipes', pdfpath)
+        pdfpath = os.path.join(api.DATA_DIR, 'recipes', pdfpath)
         notespath = data.get('notes', '')
-        notespath = os.path.join(DATA_DIR, 'recipes', notespath)
+        notespath = os.path.join(api.DATA_DIR, 'recipes', notespath)
 
         if sys.platform.startswith('win'):
             cmd = 'start "" "{}"'.format(pdfpath)
@@ -214,7 +217,7 @@ class RecipeThumbnailWidget(QtWidgets.QWidget):
 
     def saveThumbToTemp(self, path):
         name, ext = os.path.splitext(path)
-        self.path = os.path.join(TEMP_DIR, 'temp'+ext)
+        self.path = os.path.join(api.TEMP_DIR, 'temp'+ext)
         opener = urllib.request.build_opener()
         opener.addheaders = [('User-agent', 'Mozilla/5.0')]
         urllib.request.install_opener(opener)
@@ -321,7 +324,6 @@ class FoodBuddyWidget(QtWidgets.QWidget):
         self.clearButton1.clicked.connect(self.recipeThumb.setDefaultThumb)
         self.clearButton2.clicked.connect(self.recipeTitle.clear)
         self.clearButton3.clicked.connect(self.recipeTags.clear)
-        #self.recipeUrl.textChanged.connect(self.updateAddButton)
         self.recipeTitle.textChanged.connect(self.updateAddButton)
         self.recipeTags.textChanged.connect(self.updateAddButton)
         self.addButton.clicked.connect(self.addRecipe)
@@ -342,10 +344,6 @@ class FoodBuddyWidget(QtWidgets.QWidget):
         QtCore.QCoreApplication.processEvents()
 
     def updateAddButton(self):
-        '''
-        if self.recipeUrl.text() == '':
-            self.addButton.setEnabled(False)
-        '''
         if self.recipeTitle.text() == '':
             self.addButton.setEnabled(False)
         elif self.recipeTags.text() == '':
@@ -354,13 +352,12 @@ class FoodBuddyWidget(QtWidgets.QWidget):
             self.addButton.setEnabled(True)
 
     def generateRecipe(self): 
-        #url = str(self.recipeUrl.text())
-        url = 'test'
+        thumbnail = self.recipeThumb.path
         title = str(self.recipeTitle.text())
         notes = str(self.recipeNotes.toPlainText())
         tags = str(self.recipeTags.text())
         tags = [x.strip() for x in tags.split(',')]
-        recipe = api.Recipe(url, title, tags, notes)
+        recipe = api.Recipe(thumbnail, title, tags, notes)
         return recipe
 
     def openRecipeBrowser(self):
