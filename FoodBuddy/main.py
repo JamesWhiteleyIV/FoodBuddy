@@ -51,37 +51,76 @@ class ErrorMessage(QtWidgets.QDialog):
         self.okayButton.clicked.connect(self.accept)
 
 
-# TODO: rather than open file, create a new widget to view just by clicking on the recipe in browser!
+class RecipeViewerWidget(QtWidgets.QListWidget):
+
+    def __init__(self, *args, **kwargs):
+        super(RecipeViewerWidget, self).__init__(*args, **kwargs)
+        self._setupUI()
+
+    def _setupUI(self):
+        w = 400
+        h = 500
+        self.recipeThumb = RecipeThumbnailWidget()
+        self.recipeTitle = QtWidgets.QLineEdit()
+        self.recipeNotes = QtWidgets.QTextEdit()
+        self.recipeNotes.setMinimumHeight(200)
+        self.recipeTags = QtWidgets.QLineEdit()
+
+        self.resize(w, h)
+        self.setMinimumWidth(w)
+        self.setMinimumHeight(h)
+        width = self.geometry().width() / 2
+        self.deleteButton = QtWidgets.QPushButton("Delete Recipe")     
+        self.deleteButton.setMaximumWidth(width)
+        self.deleteButton.setMinimumWidth(width)
+        self.deleteButton.setStyleSheet("background-color: red; color: black;")
+        self.updateButton = QtWidgets.QPushButton("Update Recipe")     
+        self.updateButton.setMaximumWidth(width)
+        self.updateButton.setMinimumWidth(width)
+
+        self.mainLayout = QtWidgets.QVBoxLayout()
+        self.buttonLayout = QtWidgets.QHBoxLayout()
+        self.buttonLayout.addWidget(self.deleteButton)
+        self.buttonLayout.addStretch()
+        self.buttonLayout.addWidget(self.updateButton)
+
+        self.mainGridLayout = QtWidgets.QGridLayout()
+        self.mainGridLayout.addWidget(self.recipeThumb, 0, 0)
+        self.mainGridLayout.addWidget(self.recipeTitle, 1, 0)
+        self.mainGridLayout.addWidget(self.recipeNotes, 2, 0)
+        self.mainGridLayout.addWidget(self.recipeTags, 3, 0)
+        self.mainGridLayout.addLayout(self.buttonLayout, 4, 0)
+
+        self.mainLayout.addLayout(self.mainGridLayout)
+        self.setLayout(self.mainLayout)
+
+
 class RecipeListWidget(QtWidgets.QListWidget):
-    '''
-    List of RecipeItem's
-    '''
+
     def __init__(self, *args, **kwargs):
         super(RecipeListWidget, self).__init__(*args, **kwargs)
 
-    def recipeItemDoubleClicked(self):
-        # TODO: use api to open so you don't need to know paths ??
+    def recipeItemClicked(self): 
         data = self.currentItem().data
-        pdfpath = data.get('pdf', '')
-        pdfpath = os.path.join(api.DATA_DIR, 'recipes', pdfpath)
+        thumbpath = data.get('thumb', '')
         notespath = data.get('notes', '')
-        notespath = os.path.join(api.DATA_DIR, 'recipes', notespath)
+        tags = data.get('tags', [])
+        title = data.get('title', '')
 
-        if sys.platform.startswith('win'):
-            cmd = 'start "" "{}"'.format(pdfpath)
-            notescmd  = 'start "" "{}"'.format(notespath)
-        elif sys.platform.startswith('darwin'):
-            cmd = 'open "{}"'.format(pdfpath)
-            notescmd  = 'open "{}"'.format(notespath)
-        else:
-            raise OSError("This platform is not supported.")
+        # TODO: clear old thumb, notes, tags, title widgets (in browse widget maybe?)
+        if thumbpath:
+            thumbpath = os.path.join(api.RECIPES_DIR, thumbpath)
+            if os.path.exists(thumbpath):
+                print ('sure')
+                # set thumb widget
 
-        if pdfpath and os.path.exists(pdfpath):
-            os.system(cmd)
-        if notespath and os.path.exists(notespath):
-            os.system(notescmd)
+        if notespath:
+            notespath = os.path.join(api.RECIPES_DIR, notespath)
+            if os.path.exists(notespath):
+                # set notes widget
+                print ('sure')
 
-  
+
 class RecipeItem(QtWidgets.QListWidgetItem):
 
     def __init__(self, data=None, *args, **kwargs):
@@ -96,7 +135,7 @@ class BrowseWindow(QtWidgets.QDialog):
 
     def __init__(self, *args, **kwargs):
         super(BrowseWindow, self).__init__(*args, **kwargs)
-        self.parent = kwargs.get('parent', '') 
+        #self.parent = kwargs.get('parent', '') 
         self.setFocus()
         self._setupUI()
         self._connectSignals()
@@ -104,12 +143,15 @@ class BrowseWindow(QtWidgets.QDialog):
     def _setupUI(self):
         self.setWindowTitle('Recipe Browser')
 
+        '''
         if self.parent:
             width = self.parent.geometry().width()
             height = self.parent.geometry().height()
             self.resize(width, height)
         else:
             self.resize(500, 600)
+        '''
+        self.resize(1000, 600)
 
         recipeTagsLabel = QtWidgets.QLabel("Recipe Name/Tags:")
         self.recipeTags = QtWidgets.QLineEdit()
@@ -123,26 +165,36 @@ class BrowseWindow(QtWidgets.QDialog):
         self.andButton.setChecked(True)
 
         self.recipeList = RecipeListWidget(self)
+        self.recipeViewer = RecipeViewerWidget(self)
 
-        self.mainLayout = QtWidgets.QVBoxLayout()
+        #self.mainLayout = QtWidgets.QVBoxLayout()
         self.mainGridLayout = QtWidgets.QGridLayout()
+        self.recipeViewerLayout = QtWidgets.QVBoxLayout()
+        self.recipeViewerLayout.addWidget(self.recipeViewer)
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.mainGridLayout.addWidget(andLabel, 0, 0)
         self.mainGridLayout.addWidget(self.andButton, 0, 1)
         self.mainGridLayout.addWidget(orLabel, 1, 0)
         self.mainGridLayout.addWidget(self.orButton, 1, 1)
-        self.mainGridLayout.addWidget(recipeTagsLabel, 2, 0)
-        self.mainGridLayout.addWidget(self.recipeTags, 2, 1)
-        self.mainGridLayout.addWidget(self.clearButton, 2, 2)
-        self.mainGridLayout.addWidget(self.recipeList, 3, 0, 1, 3)
+        #self.mainGridLayout.addWidget(recipeTagsLabel, 2, 0)
+        self.mainGridLayout.addWidget(self.recipeTags, 2, 0)
+        self.mainGridLayout.addWidget(self.clearButton, 2, 1)
+        self.mainGridLayout.addWidget(self.recipeList, 3, 0, 1, 2)
 
-        self.mainLayout.addLayout(self.mainGridLayout)
-        self.setLayout(self.mainLayout)
+        self.horizontalLayout.addLayout(self.mainGridLayout)
+        self.horizontalLayout.addLayout(self.recipeViewerLayout)
+
+        #self.mainGridLayout.addWidget(self.recipeViewer, 0, 3, 4, 2)
+
+        #self.mainLayout.addLayout(self.mainGridLayout)
+        #self.setLayout(self.mainLayout)
+        self.setLayout(self.horizontalLayout)
 
     def _connectSignals(self):
         self.clearButton.clicked.connect(self.recipeTags.clear)
         self.recipeTags.textChanged.connect(self.updateRecipes)
         self.andButton.toggled.connect(self.updateRecipes)
-        self.recipeList.itemDoubleClicked.connect(self.recipeList.recipeItemDoubleClicked)
+        self.recipeList.itemClicked.connect(self.recipeList.recipeItemClicked)
 
     def updateRecipes(self):
         self.criteriaChange.emit()
@@ -194,7 +246,7 @@ class RecipeThumbnailWidget(QtWidgets.QWidget):
         self.x, self.y = 200, 200
         self.media.setMinimumWidth(self.x)
         self.media.setMinimumHeight(self.y)
-        self.media.setStyleSheet("QLabel { background-color : rgb(119,136,153); border-radius: 20px;}")
+        self.media.setStyleSheet("QLabel { background-color : rgb(200,200,200); border-radius: 20px;}")
 
     def setDefaultThumb(self):
         self.media.setText("Drag thumbnail here")
@@ -266,29 +318,32 @@ class FoodBuddyWidget(QtWidgets.QWidget):
         self.setWindowIcon(QtGui.QIcon(burgerIcon))
         self.center()
 
-        recipeThumbLabel = QtWidgets.QLabel("Recipe Thumbnail:")
+        recipeThumbLabel = QtWidgets.QLabel("Thumbnail:")
         self.recipeThumb = RecipeThumbnailWidget()
         self.clearButton1 = QtWidgets.QPushButton("Clear")     
 
-        recipeTitleLabel = QtWidgets.QLabel("Recipe Title:")
+        recipeTitleLabel = QtWidgets.QLabel("Title:")
         self.recipeTitle = QtWidgets.QLineEdit()
         self.recipeTitle.setPlaceholderText("Example: Chicken Soup")
         self.clearButton2 = QtWidgets.QPushButton("Clear")     
 
-        recipeTagsLabel = QtWidgets.QLabel("Recipe Tags:")
+        recipeTagsLabel = QtWidgets.QLabel("Tags:")
         self.recipeTags = QtWidgets.QLineEdit()
         self.recipeTags.setPlaceholderText("Example: Chicken, tortilla, soup")
         self.clearButton3 = QtWidgets.QPushButton("Clear")     
 
-        recipeNotesLabel = QtWidgets.QLabel("Recipe Notes:")
+        recipeNotesLabel = QtWidgets.QLabel("Recipe:")
         self.recipeNotes = QtWidgets.QTextEdit()
         self.recipeNotes.setMinimumHeight(200)
         recipeNotesLabel.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
 
+        width = self.geometry().width() / 2
         self.browseButton = QtWidgets.QPushButton("Browse Recipes")     
-        self.browseButton.setMaximumWidth(100)
+        self.browseButton.setMaximumWidth(width)
+        self.browseButton.setMinimumWidth(width)
         self.addButton = QtWidgets.QPushButton("Add Recipe")     
-        self.addButton.setMaximumWidth(100)
+        self.addButton.setMaximumWidth(width)
+        self.addButton.setMinimumWidth(width)
         self.addButton.setEnabled(False)
 
         self.statusLabel = StatusLabel()
@@ -402,7 +457,7 @@ class FoodBuddyWidget(QtWidgets.QWidget):
             return
         else:
             self.updateStatus(
-                    "Recipe added successfully",
+                    "Recipe {} added successfully!".format(recipe.title),
                     styling='background: green;')
             self.addButton.setEnabled(True)
 

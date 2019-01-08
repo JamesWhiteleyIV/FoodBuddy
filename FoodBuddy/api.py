@@ -13,7 +13,6 @@ TEMP_DIR = os.path.join(DATA_DIR, 'temp')
 LOG_FILE = os.path.join(DATA_DIR, 'log.txt')
 METADATA_FILE = os.path.join(DATA_DIR, 'metadata.json')
 #sys.stdout = open(LOG_FILE, "w")
-#TODO uncomment above?
 
 class Recipe(object):
 
@@ -26,9 +25,7 @@ class Recipe(object):
             :param thumbnail: <str> path to thumbnail image
         """
         self.id = self._generateRecipeID()
-        self.thumbnail = pathlib.path(thumbnail)
-        print(thumbnail)
-        print(type(thumbnail))
+        self.thumbnail = pathlib.Path(str(thumbnail)) if thumbnail else None
         self.title = title 
         self.tags = tags
         self.notes = notes
@@ -45,8 +42,11 @@ class Recipe(object):
         """
         Returns next highest available number in recipes dir.
         """
-        nextRecipeID = max([x for x in os.listdir(RECIPES_DIR)]) + 1
-        return str(nextRecipeID)
+        recipes = [int(x) for x in os.listdir(RECIPES_DIR)]
+        if not recipes:
+            return '1' 
+
+        return str(max(recipes) + 1)
 
 
 class FoodBuddy(object):
@@ -93,15 +93,15 @@ class FoodBuddy(object):
 
         os.makedirs(recipePath)
 
-        thumbPath = os.path.join(recipePath, recipe.thumbnail.name)
-        shutil.copy2(recipe.thumbnail, thumbPath)
+        if recipe.thumbnail:
+            thumbPath = os.path.join(recipePath, recipe.thumbnail.name)
+            shutil.copy2(str(recipe.thumbnail), thumbPath)
 
         notesPath = os.path.join(recipePath, 'notes.txt')
         with open(notesPath, 'w') as fp:
             fp.write(recipe.notes)
 
 
-    # TODO: update how you add meta data
     def _loadMetadata(self):
         """
             Loads metadata.json into dictionary and returns it.
@@ -129,7 +129,7 @@ class FoodBuddy(object):
                 'created': <datetime fo creation>,
             }
         """
-        thumbPath = os.path.join(recipe.id, recipe.thumbnail.name)
+        thumbPath = os.path.join(recipe.id, recipe.thumbnail.name) if recipe.thumbnail else None
         notesPath = os.path.join(recipe.id, 'notes.txt')
 
         data = self._loadMetadata()
@@ -140,8 +140,8 @@ class FoodBuddy(object):
                 'title': recipe.title,
                 'tags': recipe.tags,
                 'notes': notesPath, 
-                'thumb': recipe.thumbnail,
-                'created': datetime.datetime.now()
+                'thumb': thumbPath, 
+                'created': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
 
         with open(METADATA_FILE, 'w') as fp:
@@ -171,6 +171,9 @@ class FoodBuddy(object):
         """
         data = self._loadMetadata()
         data['recipes'].pop(recipeID, None)
+
+        with open(METADATA_FILE, 'w') as fp:
+            json.dump(data, fp, indent=4)
 
         for id_ in os.listdir(RECIPES_DIR):
             if id_ == recipeID:
