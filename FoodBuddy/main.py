@@ -3,11 +3,15 @@ import os
 from PyQt5 import QtWidgets, QtCore, QtGui  
 import api
 import traceback
+import urllib.request
+import re
 
+# TODO: add all this to init of api?
 RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESOURCE_DIR = os.path.join(RESOURCE_DIR, 'resources')
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(DATA_DIR, '..', 'data')
+TEMP_DIR = os.path.join(DATA_DIR, 'temp')
 
 class ErrorMessage(QtWidgets.QDialog):
 
@@ -57,6 +61,7 @@ class RecipeListWidget(QtWidgets.QListWidget):
         super(RecipeListWidget, self).__init__(*args, **kwargs)
 
     def recipeItemDoubleClicked(self):
+        # TODO: use api to open so you don't need to know paths ??
         data = self.currentItem().data
         pdfpath = data.get('pdf', '')
         pdfpath = os.path.join(DATA_DIR, 'recipes', pdfpath)
@@ -176,19 +181,72 @@ class StatusLabel(QtWidgets.QWidget):
             self.timeoutTimer.start(timeout)
 
 
-class RecipeUrlWidget(QtWidgets.QLineEdit):
+class RecipeThumbnailWidget(QtWidgets.QWidget):
 
     def __init__(self):
-        super(RecipeUrlWidget, self).__init__()
-        self.setDragEnabled(True)
-        self.setPlaceholderText("Drag or type URL  Example: https://www.allrecipes.com/recipe/257938")
+        super(RecipeThumbnailWidget, self).__init__()
+        self.media = QtWidgets.QLabel()
+        self.path = None
+        self.setAcceptDrops(True)
+        mainLayout = QtWidgets.QHBoxLayout()
+        mainLayout.addWidget(self.media)
+        self.setLayout(mainLayout)
+        self.setDefaultThumb()
+        self.x, self.y = 200, 200
+        self.media.setMinimumWidth(self.x)
+        self.media.setMinimumHeight(self.y)
+        self.media.setStyleSheet("QLabel { background-color : rgb(119,136,153); border-radius: 20px;}")
 
-    def dropEvent(self, event):
-        data = event.mimeData()
-        urls = data.urls()
-        if urls and urls[0].scheme() in ('http', 'https'):
-            filepath = urls[0].toString() 
-            self.setText(filepath)
+    def setDefaultThumb(self):
+        self.media.setText("Drag thumbnail here")
+        self.media.setAlignment(QtCore.Qt.AlignCenter)
+        self.path = None
+
+    def setImagePreview(self):
+        pixmap = QtGui.QPixmap(str(self.path))
+        if pixmap is None:
+            self.setDefaultThumb()
+        else:
+            w = self.media.width()
+            h = self.media.height()
+            pixmap = pixmap.scaled(w, h, QtCore.Qt.KeepAspectRatio)
+            self.media.setPixmap(pixmap)
+
+    def saveThumbToTemp(self, path):
+        name, ext = os.path.splitext(path)
+        self.path = os.path.join(TEMP_DIR, 'temp'+ext)
+        opener = urllib.request.build_opener()
+        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+        urllib.request.install_opener(opener)
+        urllib.request.urlretrieve(path, self.path)
+
+    def setThumbnail(self, path):
+        if re.match('.*\.(jpg|psd|png|gif|tga|tif|bmp)$', path):
+            self.saveThumbToTemp(path)
+            self.setImagePreview()
+
+    def dragEnterEvent(self, e):
+        if e.mimeData().hasUrls:
+            e.accept()
+        else:
+            e.ignore()
+
+    def dragMoveEvent(self, e):
+        if e.mimeData().hasUrls:
+            e.accept()
+        else:
+            e.ignore()
+
+    def dropEvent(self, e):
+        if e.mimeData().hasUrls:
+            e.setDropAction(QtCore.Qt.CopyAction)
+            e.accept()
+            url = e.mimeData().urls()[0]
+            path = os.path.join(url.toString())
+            self.setThumbnail(path)
+        else:
+            e.ignore()
+
 
 
 class FoodBuddyWidget(QtWidgets.QWidget):
@@ -203,14 +261,14 @@ class FoodBuddyWidget(QtWidgets.QWidget):
         self.show()
 
     def _setupUI(self):
-        self.setGeometry(50, 50, 500, 600)
+        self.setGeometry(50, 50, 600, 800)
         self.setWindowTitle("FoodBuddy")
         burgerIcon = os.path.join(RESOURCE_DIR, 'burger.png')
         self.setWindowIcon(QtGui.QIcon(burgerIcon))
         self.center()
 
-        recipeUrlLabel = QtWidgets.QLabel("Recipe URL:")
-        self.recipeUrl = RecipeUrlWidget()
+        recipeThumbLabel = QtWidgets.QLabel("Recipe Thumbnail:")
+        self.recipeThumb = RecipeThumbnailWidget()
         self.clearButton1 = QtWidgets.QPushButton("Clear")     
 
         recipeTitleLabel = QtWidgets.QLabel("Recipe Title:")
@@ -242,8 +300,8 @@ class FoodBuddyWidget(QtWidgets.QWidget):
         self.buttonLayout.addWidget(self.addButton)
 
         self.mainGridLayout = QtWidgets.QGridLayout()
-        self.mainGridLayout.addWidget(recipeUrlLabel, 0, 0)
-        self.mainGridLayout.addWidget(self.recipeUrl, 0, 1)
+        self.mainGridLayout.addWidget(recipeThumbLabel, 0, 0)
+        self.mainGridLayout.addWidget(self.recipeThumb, 0, 1)
         self.mainGridLayout.addWidget(self.clearButton1, 0, 2)
         self.mainGridLayout.addWidget(recipeTitleLabel, 1, 0)
         self.mainGridLayout.addWidget(self.recipeTitle, 1, 1)
@@ -260,10 +318,10 @@ class FoodBuddyWidget(QtWidgets.QWidget):
         self.setLayout(self.mainLayout)
 
     def _connectSignals(self):
-        self.clearButton1.clicked.connect(self.recipeUrl.clear)
+        self.clearButton1.clicked.connect(self.recipeThumb.setDefaultThumb)
         self.clearButton2.clicked.connect(self.recipeTitle.clear)
         self.clearButton3.clicked.connect(self.recipeTags.clear)
-        self.recipeUrl.textChanged.connect(self.updateAddButton)
+        #self.recipeUrl.textChanged.connect(self.updateAddButton)
         self.recipeTitle.textChanged.connect(self.updateAddButton)
         self.recipeTags.textChanged.connect(self.updateAddButton)
         self.addButton.clicked.connect(self.addRecipe)
@@ -284,9 +342,11 @@ class FoodBuddyWidget(QtWidgets.QWidget):
         QtCore.QCoreApplication.processEvents()
 
     def updateAddButton(self):
+        '''
         if self.recipeUrl.text() == '':
             self.addButton.setEnabled(False)
-        elif self.recipeTitle.text() == '':
+        '''
+        if self.recipeTitle.text() == '':
             self.addButton.setEnabled(False)
         elif self.recipeTags.text() == '':
             self.addButton.setEnabled(False)
@@ -294,7 +354,8 @@ class FoodBuddyWidget(QtWidgets.QWidget):
             self.addButton.setEnabled(True)
 
     def generateRecipe(self): 
-        url = str(self.recipeUrl.text())
+        #url = str(self.recipeUrl.text())
+        url = 'test'
         title = str(self.recipeTitle.text())
         notes = str(self.recipeNotes.toPlainText())
         tags = str(self.recipeTags.text())
@@ -333,7 +394,7 @@ class FoodBuddyWidget(QtWidgets.QWidget):
             self.updateStatus("Adding Recipe, this may take a minute...")
             self.addButton.setEnabled(False)
             recipe = self.generateRecipe()
-            self.foodBuddy.publishRecipe(recipe)
+            self.foodBuddy.createRecipe(recipe)
         except Exception as err:
             self.updateStatus(
                     "Error adding recipe",

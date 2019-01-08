@@ -9,7 +9,8 @@ import pdfkit
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(DATA_DIR, '..', 'data')
 LOG_FILE = os.path.join(DATA_DIR, 'log.txt')
-sys.stdout = open(LOG_FILE, "w")
+#sys.stdout = open(LOG_FILE, "w")
+#TODO uncomment above?
 
 class Recipe(object):
 
@@ -59,6 +60,7 @@ class FoodBuddy(object):
         """
         self.recipesDirectory = os.path.join(DATA_DIR, 'recipes')
         self.metadataDirectory = os.path.join(DATA_DIR, 'metadata.json') 
+        # TODO: init temp dir
 
         if not os.path.exists(self.recipesDirectory):
             os.makedirs(self.recipesDirectory)
@@ -116,6 +118,7 @@ class FoodBuddy(object):
         #     copy from added path --> <recipe ID>/thumbnail.<ext>
 
 
+    # TODO: update how you add meta data
     def _loadMetadata(self):
         """
             Loads metadata.json into dictionary and returns it.
@@ -162,7 +165,7 @@ class FoodBuddy(object):
             json.dump(data, fp, indent=4)
 
 
-    def publishRecipe(self, recipe):
+    def createRecipe(self, recipe):
         """
             :param recipe: Recipe object
 
@@ -171,6 +174,14 @@ class FoodBuddy(object):
         """
         self._addRecipeFolder(recipe)
         self._addRecipeMetadata(recipe)
+
+    # TODO:
+    def updateRecipe(self):
+        pass
+
+    # TODO:
+    def deleteRecipe(self):
+        pass
 
 
     def getRecipesByTags(self, tags, searchBy='AND'):

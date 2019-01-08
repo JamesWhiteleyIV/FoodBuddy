@@ -1,1 +1,3 @@
-start "" pyw "%~dp0\..\FoodBuddy\main.py"
+start "" py "%~dp0\..\FoodBuddy\main.py"
+
+pause
