@@ -1,3 +1,30 @@
 {
-    "recipes": {}
+    "recipes": {
+        "1": {
+            "id": "1",
+            "title": "Vegan Chili",
+            "tags": [
+                "soup",
+                "stew",
+                "bean",
+                "tomato",
+                "vegetarian",
+                "vegan"
+            ],
+            "notes": "1\\notes.txt",
+            "thumb": "1\\thumb.jpg",
+            "created": "2019-01-08 23:09:45"
+        },
+        "2": {
+            "id": "2",
+            "title": "Perfect Brown Rice",
+            "tags": [
+                "rice",
+                "brown"
+            ],
+            "notes": "2\\notes.txt",
+            "thumb": "2\\thumb.jpg",
+            "created": "2019-01-08 23:10:45"
+        }
+    }
 }
