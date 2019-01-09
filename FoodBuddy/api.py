@@ -7,7 +7,8 @@ import json
 import pathlib
 import shutil
 
-DATA_DIR = os.path.join(os.path.abspath(__file__), '..', 'data')
+DATA_DIR = os.path.abspath(os.path.join(__file__, os.pardir))
+DATA_DIR = os.path.join(DATA_DIR, '..', 'data')
 RECIPES_DIR = os.path.join(DATA_DIR, 'recipes')
 TEMP_DIR = os.path.join(DATA_DIR, 'temp')
 LOG_FILE = os.path.join(DATA_DIR, 'log.txt')

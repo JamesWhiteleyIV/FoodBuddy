@@ -8,13 +8,3 @@ pip3 install pdfkit
 
 # Install PyQt5 
 pip3 install pyqt5
-
-# Install wkhtmltopdf, download using installer in resources folder
-for Mac:
-	"~\FoodBuddy\resources\wkhtmltox-0.12.5-1.macos-cocoa.pkg"
-for Windows:
-	"~\FoodBuddy\resources\wkhtmltox-0.12.5-1.msvc2015-win64.exe"
-
-
-
-

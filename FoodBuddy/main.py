@@ -5,6 +5,7 @@ import api
 import traceback
 import urllib.request
 import re
+import shutil
 
 
 RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -94,31 +95,30 @@ class RecipeViewerWidget(QtWidgets.QListWidget):
         self.mainLayout.addLayout(self.mainGridLayout)
         self.setLayout(self.mainLayout)
 
+    def setThumb(self, thumbPath):
+        """ sets self.recipeThumb thumbnail to thumbPath if exists """ 
+        if os.path.exists(thumbPath):
+            self.recipeThumb.setThumbnail(thumbPath)
 
+    def setNotes(self, notesPath):
+        """ if exists, loads notes.txt to string then adds to self.recipeNotes QLineEdit """
+        if os.path.exists(notesPath):
+            with open(notesPath, 'r') as fp:
+                data = fp.read()
+        self.recipeNotes.setText(data)
+
+    def setTags(self, tags):
+        tags = ', '.join(tags)
+        self.recipeTags.setText(tags)
+
+    def setTitle(self, title):
+        self.recipeTitle.setText(title)
+
+
+# TODO I don't think we need this, just use a regular QListWidget wherever this is used
 class RecipeListWidget(QtWidgets.QListWidget):
-
     def __init__(self, *args, **kwargs):
         super(RecipeListWidget, self).__init__(*args, **kwargs)
-
-    def recipeItemClicked(self): 
-        data = self.currentItem().data
-        thumbpath = data.get('thumb', '')
-        notespath = data.get('notes', '')
-        tags = data.get('tags', [])
-        title = data.get('title', '')
-
-        # TODO: clear old thumb, notes, tags, title widgets (in browse widget maybe?)
-        if thumbpath:
-            thumbpath = os.path.join(api.RECIPES_DIR, thumbpath)
-            if os.path.exists(thumbpath):
-                print ('sure')
-                # set thumb widget
-
-        if notespath:
-            notespath = os.path.join(api.RECIPES_DIR, notespath)
-            if os.path.exists(notespath):
-                # set notes widget
-                print ('sure')
 
 
 class RecipeItem(QtWidgets.QListWidgetItem):
@@ -135,22 +135,12 @@ class BrowseWindow(QtWidgets.QDialog):
 
     def __init__(self, *args, **kwargs):
         super(BrowseWindow, self).__init__(*args, **kwargs)
-        #self.parent = kwargs.get('parent', '') 
         self.setFocus()
         self._setupUI()
         self._connectSignals()
 
     def _setupUI(self):
         self.setWindowTitle('Recipe Browser')
-
-        '''
-        if self.parent:
-            width = self.parent.geometry().width()
-            height = self.parent.geometry().height()
-            self.resize(width, height)
-        else:
-            self.resize(500, 600)
-        '''
         self.resize(1000, 600)
 
         recipeTagsLabel = QtWidgets.QLabel("Recipe Name/Tags:")
@@ -167,7 +157,6 @@ class BrowseWindow(QtWidgets.QDialog):
         self.recipeList = RecipeListWidget(self)
         self.recipeViewer = RecipeViewerWidget(self)
 
-        #self.mainLayout = QtWidgets.QVBoxLayout()
         self.mainGridLayout = QtWidgets.QGridLayout()
         self.recipeViewerLayout = QtWidgets.QVBoxLayout()
         self.recipeViewerLayout.addWidget(self.recipeViewer)
@@ -176,25 +165,42 @@ class BrowseWindow(QtWidgets.QDialog):
         self.mainGridLayout.addWidget(self.andButton, 0, 1)
         self.mainGridLayout.addWidget(orLabel, 1, 0)
         self.mainGridLayout.addWidget(self.orButton, 1, 1)
-        #self.mainGridLayout.addWidget(recipeTagsLabel, 2, 0)
         self.mainGridLayout.addWidget(self.recipeTags, 2, 0)
         self.mainGridLayout.addWidget(self.clearButton, 2, 1)
         self.mainGridLayout.addWidget(self.recipeList, 3, 0, 1, 2)
 
         self.horizontalLayout.addLayout(self.mainGridLayout)
         self.horizontalLayout.addLayout(self.recipeViewerLayout)
-
-        #self.mainGridLayout.addWidget(self.recipeViewer, 0, 3, 4, 2)
-
-        #self.mainLayout.addLayout(self.mainGridLayout)
-        #self.setLayout(self.mainLayout)
         self.setLayout(self.horizontalLayout)
+
+    def recipeItemClicked(self):
+        data = self.recipeList.currentItem().data
+        thumbpath = data.get('thumb', '')
+        notespath = data.get('notes', '')
+        tags = data.get('tags', [])
+        title = data.get('title', '')
+
+        if thumbpath:
+            thumbpath = os.path.join(api.RECIPES_DIR, thumbpath)
+            self.recipeViewer.setThumb(thumbpath)
+
+        if notespath:
+            notespath = os.path.join(api.RECIPES_DIR, notespath)
+            self.recipeViewer.setNotes(notespath)
+
+        if tags:
+            self.recipeViewer.setTags(tags)
+
+        if title:
+            self.recipeViewer.setTitle(title)
+
+
 
     def _connectSignals(self):
         self.clearButton.clicked.connect(self.recipeTags.clear)
         self.recipeTags.textChanged.connect(self.updateRecipes)
         self.andButton.toggled.connect(self.updateRecipes)
-        self.recipeList.itemClicked.connect(self.recipeList.recipeItemClicked)
+        self.recipeList.itemClicked.connect(self.recipeItemClicked)
 
     def updateRecipes(self):
         self.criteriaChange.emit()
@@ -266,10 +272,16 @@ class RecipeThumbnailWidget(QtWidgets.QWidget):
     def saveThumbToTemp(self, path):
         name, ext = os.path.splitext(path)
         self.path = os.path.join(api.TEMP_DIR, 'thumb'+ext)
-        opener = urllib.request.build_opener()
-        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-        urllib.request.install_opener(opener)
-        urllib.request.urlretrieve(path, self.path)
+
+        # if local file
+        if os.path.exists(path):
+            shutil.copy2(path, self.path)
+        # else from url
+        else:
+            opener = urllib.request.build_opener()
+            opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+            urllib.request.install_opener(opener)
+            urllib.request.urlretrieve(path, self.path)
 
     def setThumbnail(self, path):
         if re.match('.*\.(jpg|psd|png|gif|tga|tif|bmp)$', path):
