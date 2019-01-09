@@ -138,6 +138,7 @@ class FoodBuddy(object):
             raise KeyError("This recipe ID already exists in metadata.json.")
 
         data['recipes'][recipe.id] = {
+                'id': recipe.id,
                 'title': recipe.title,
                 'tags': recipe.tags,
                 'notes': notesPath, 

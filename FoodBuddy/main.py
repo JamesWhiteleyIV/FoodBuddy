@@ -54,9 +54,13 @@ class ErrorMessage(QtWidgets.QDialog):
 
 class RecipeViewerWidget(QtWidgets.QListWidget):
 
+    deleteRecipeSignal = QtCore.pyqtSignal()
+    updateRecipeSignal = QtCore.pyqtSignal()
+
     def __init__(self, *args, **kwargs):
         super(RecipeViewerWidget, self).__init__(*args, **kwargs)
         self._setupUI()
+        self._connectSignals()
 
     def _setupUI(self):
         w = 400
@@ -71,10 +75,12 @@ class RecipeViewerWidget(QtWidgets.QListWidget):
         self.setMinimumWidth(w)
         self.setMinimumHeight(h)
         width = self.geometry().width() / 2
+
         self.deleteButton = QtWidgets.QPushButton("Delete Recipe")     
         self.deleteButton.setMaximumWidth(width)
         self.deleteButton.setMinimumWidth(width)
         self.deleteButton.setStyleSheet("background-color: red; color: black;")
+
         self.updateButton = QtWidgets.QPushButton("Update Recipe")     
         self.updateButton.setMaximumWidth(width)
         self.updateButton.setMinimumWidth(width)
@@ -95,6 +101,16 @@ class RecipeViewerWidget(QtWidgets.QListWidget):
         self.mainLayout.addLayout(self.mainGridLayout)
         self.setLayout(self.mainLayout)
 
+    def _connectSignals(self):
+        self.deleteButton.clicked.connect(self._emitDelete)
+        self.updateButton.clicked.connect(self._emitUpdate)
+
+    def _emitDelete(self):
+        self.deleteRecipeSignal.emit()
+
+    def _emitUpdate(self):
+        self.updateRecipeSignal.emit()
+
     def setThumb(self, thumbPath):
         """ sets self.recipeThumb thumbnail to thumbPath if exists """ 
         if os.path.exists(thumbPath):
@@ -113,12 +129,6 @@ class RecipeViewerWidget(QtWidgets.QListWidget):
 
     def setTitle(self, title):
         self.recipeTitle.setText(title)
-
-
-# TODO I don't think we need this, just use a regular QListWidget wherever this is used
-class RecipeListWidget(QtWidgets.QListWidget):
-    def __init__(self, *args, **kwargs):
-        super(RecipeListWidget, self).__init__(*args, **kwargs)
 
 
 class RecipeItem(QtWidgets.QListWidgetItem):
@@ -154,7 +164,7 @@ class BrowseWindow(QtWidgets.QDialog):
         self.andButton = QtWidgets.QRadioButton()
         self.andButton.setChecked(True)
 
-        self.recipeList = RecipeListWidget(self)
+        self.recipeList = QtWidgets.QListWidget(self)
         self.recipeViewer = RecipeViewerWidget(self)
 
         self.mainGridLayout = QtWidgets.QGridLayout()
@@ -194,16 +204,15 @@ class BrowseWindow(QtWidgets.QDialog):
         if title:
             self.recipeViewer.setTitle(title)
 
-
-
     def _connectSignals(self):
         self.clearButton.clicked.connect(self.recipeTags.clear)
-        self.recipeTags.textChanged.connect(self.updateRecipes)
-        self.andButton.toggled.connect(self.updateRecipes)
+        self.recipeTags.textChanged.connect(self.findRecipes)
+        self.andButton.toggled.connect(self.findRecipes)
         self.recipeList.itemClicked.connect(self.recipeItemClicked)
 
-    def updateRecipes(self):
+    def findRecipes(self):
         self.criteriaChange.emit()
+
 
 
 class StatusLabel(QtWidgets.QWidget):
@@ -284,7 +293,7 @@ class RecipeThumbnailWidget(QtWidgets.QWidget):
             urllib.request.urlretrieve(path, self.path)
 
     def setThumbnail(self, path):
-        if re.match('.*\.(jpg|psd|png|gif|tga|tif|bmp)$', path):
+        if re.match('.*\.(jpg|psd|png|gif|tga|tif|bmp)$', path, re.IGNORECASE):
             self.saveThumbToTemp(path)
             self.setImagePreview()
 
@@ -427,12 +436,16 @@ class FoodBuddyWidget(QtWidgets.QWidget):
         if self.recipeBrowser is None:
             self.recipeBrowser = BrowseWindow(parent=self) 
             self.recipeBrowser.criteriaChange.connect(self.setBrowserRecipes)
-        self.recipeBrowser.updateRecipes()
+            self.recipeBrowser.recipeViewer.deleteRecipeSignal.connect(self.deleteRecipe)
+            self.recipeBrowser.recipeViewer.updateRecipeSignal.connect(self.updateRecipe)
+        self.recipeBrowser.findRecipes()
         self.recipeBrowser.show()
         self.recipeBrowser.raise_()
 
     def setBrowserRecipes(self):
         if self.recipeBrowser:
+            self.recipeBrowser.recipeList.clear()
+
             tags = str(self.recipeBrowser.recipeTags.text())
             tags = [x.strip() for x in tags.split(',')]
 
@@ -442,12 +455,10 @@ class FoodBuddyWidget(QtWidgets.QWidget):
                 searchBy = 'OR'
             recipes = self.foodBuddy.getRecipesByTags(tags, searchBy)
 
-            self.recipeBrowser.recipeList.clear()
             for code, data in recipes.items():
                 recipeItem = RecipeItem(data) 
                 self.recipeBrowser.recipeList.addItem(recipeItem)
             self.recipeBrowser.recipeList.sortItems()
-
 
     def addRecipe(self):
         try:
@@ -472,6 +483,35 @@ class FoodBuddyWidget(QtWidgets.QWidget):
                     "Recipe {} added successfully!".format(recipe.title),
                     styling='background: green;')
             self.addButton.setEnabled(True)
+
+
+    def deleteRecipe(self):
+        if self.recipeBrowser.recipeList.currentRow() < 0:
+            return
+        data = self.recipeBrowser.recipeList.currentItem().data
+        recipeID = data.get('id', None)
+        recipeTitle = data.get('title', '')
+        if recipeID:
+            msg = "Are you sure you want to delete the recipe '{}'?".format(recipeTitle)
+            buttonReply = QtWidgets.QMessageBox.question(self, "Delete Recipe", msg, QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+            if buttonReply == QtWidgets.QMessageBox.Yes:
+                self.foodBuddy.deleteRecipe(recipeID)
+
+
+    def updateRecipe(self):
+        print("UPDATE RECIPE!@")
+        return
+        data = self.recipeList.currentItem().data
+        thumbnail = self.recipeThumb.path
+        title = str(self.recipeTitle.text())
+        notes = str(self.recipeNotes.toPlainText())
+        tags = str(self.recipeTags.text())
+        tags = [x.strip() for x in tags.split(',')]
+        recipe = api.Recipe(thumbnail, title, tags, notes)
+        return recipe
+
+
+
 
 def run():
     app = QtWidgets.QApplication(sys.argv)
