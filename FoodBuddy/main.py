@@ -492,7 +492,7 @@ class FoodBuddyWidget(QtWidgets.QWidget):
             return
         else:
             self.updateStatus(
-                    "Recipe {} added successfully!".format(recipe.title),
+                    "Recipe '{}' added successfully!".format(recipe.title),
                     styling='background: green;')
             self.addButton.setEnabled(True)
 

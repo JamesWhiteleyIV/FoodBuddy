@@ -176,11 +176,11 @@ class FoodBuddy(object):
         thumbPath = None
         if thumbnail:
             thumbnail = pathlib.Path(thumbnail)
-            thumbPath = os.path.join(RECIPES_DIR, recipeID, thumbnail.name)
-            shutil.copy2(str(thumbnail), str(thumbPath))
+            thumbPath = os.path.join(recipeID, thumbnail.name)
+            shutil.copy2(str(thumbnail), str(os.path.join(RECIPES_DIR, thumbPath)))
 
-        notesPath = os.path.join(RECIPES_DIR, recipeID, 'notes.txt')
-        with open(notesPath, 'w') as fp:
+        notesPath = os.path.join(recipeID, 'notes.txt')
+        with open(os.path.join(RECIPES_DIR, notesPath), 'w') as fp:
             fp.write(notes)
 
         orgCreateTime =  data['recipes'][recipeID]['created']
