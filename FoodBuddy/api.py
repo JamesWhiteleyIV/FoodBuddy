@@ -160,9 +160,45 @@ class FoodBuddy(object):
         self._addRecipeFolder(recipe)
         self._addRecipeMetadata(recipe)
 
-    # TODO:
-    def updateRecipe(self):
-        pass
+
+    def updateRecipe(self, recipeID, thumbnail, title, tags, notes):
+        """
+            :param recipeID: str
+            :param thumbnail: str
+            :param title: str 
+            :param tags: list of str 
+            :param notes: str 
+
+            Updates this recipe ID with new recipe data.
+        """
+        data = self._loadMetadata()
+
+        thumbPath = None
+        if thumbnail:
+            thumbnail = pathlib.Path(thumbnail)
+            thumbPath = os.path.join(RECIPES_DIR, recipeID, thumbnail.name)
+            shutil.copy2(str(thumbnail), str(thumbPath))
+
+        notesPath = os.path.join(RECIPES_DIR, recipeID, 'notes.txt')
+        with open(notesPath, 'w') as fp:
+            fp.write(notes)
+
+        orgCreateTime =  data['recipes'][recipeID]['created']
+        data['recipes'][recipeID] = {
+                'id': recipeID,
+                'title': title,
+                'tags': tags,
+                'notes': notesPath, 
+                'thumb': thumbPath, 
+                'created': orgCreateTime,
+                'modified': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+
+        with open(METADATA_FILE, 'w') as fp:
+            json.dump(data, fp, indent=4)
+
+
+
 
     def deleteRecipe(self, recipeID):
         """

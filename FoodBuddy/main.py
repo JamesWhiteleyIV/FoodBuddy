@@ -213,6 +213,13 @@ class BrowseWindow(QtWidgets.QDialog):
     def findRecipes(self):
         self.criteriaChange.emit()
 
+    def resetViewer(self):
+        self.recipeViewer.recipeThumb.setDefaultThumb()
+        self.recipeViewer.recipeTitle.setText("")
+        self.recipeViewer.recipeTags.setText("")
+        self.recipeViewer.recipeNotes.setText("")
+
+
 
 
 class StatusLabel(QtWidgets.QWidget):
@@ -263,8 +270,10 @@ class RecipeThumbnailWidget(QtWidgets.QWidget):
         self.media.setMinimumHeight(self.y)
         self.media.setStyleSheet("QLabel { background-color : rgb(200,200,200); border-radius: 20px;}")
 
-    def setDefaultThumb(self):
-        self.media.setText("Drag thumbnail here")
+    def setDefaultThumb(self, msg=None):
+        if not msg:
+            msg = "Drag thumbnail here"
+        self.media.setText(msg)
         self.media.setAlignment(QtCore.Qt.AlignCenter)
         self.path = None
 
@@ -466,6 +475,9 @@ class FoodBuddyWidget(QtWidgets.QWidget):
             self.addButton.setEnabled(False)
             recipe = self.generateRecipe()
             self.foodBuddy.createRecipe(recipe)
+            if self.recipeBrowser:
+                self.setBrowserRecipes()
+                #self.recipeBrowser.resetViewer()
         except Exception as err:
             self.updateStatus(
                     "Error adding recipe",
@@ -496,19 +508,30 @@ class FoodBuddyWidget(QtWidgets.QWidget):
             buttonReply = QtWidgets.QMessageBox.question(self, "Delete Recipe", msg, QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
             if buttonReply == QtWidgets.QMessageBox.Yes:
                 self.foodBuddy.deleteRecipe(recipeID)
+                self.setBrowserRecipes()
+                self.recipeBrowser.resetViewer()
 
 
+    # on delete it deselects everything, do we need to set the viewer on update or does it deselect?
     def updateRecipe(self):
-        print("UPDATE RECIPE!@")
-        return
-        data = self.recipeList.currentItem().data
-        thumbnail = self.recipeThumb.path
-        title = str(self.recipeTitle.text())
-        notes = str(self.recipeNotes.toPlainText())
-        tags = str(self.recipeTags.text())
+        if self.recipeBrowser.recipeList.currentRow() < 0:
+            return
+        thumbnail = self.recipeBrowser.recipeViewer.recipeThumb.path
+        title = str(self.recipeBrowser.recipeViewer.recipeTitle.text())
+        tags = str(self.recipeBrowser.recipeViewer.recipeTags.text())
         tags = [x.strip() for x in tags.split(',')]
-        recipe = api.Recipe(thumbnail, title, tags, notes)
-        return recipe
+        notes = str(self.recipeBrowser.recipeViewer.recipeNotes.toPlainText())
+
+        data = self.recipeBrowser.recipeList.currentItem().data
+        recipeID = data.get('id', None)
+        recipeTitle = data.get('title', '')
+        if recipeID:
+            msg = "Are you sure you want to update the recipe '{}'?".format(recipeTitle)
+            buttonReply = QtWidgets.QMessageBox.question(self, "Delete Recipe", msg, QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+            if buttonReply == QtWidgets.QMessageBox.Yes:
+                self.foodBuddy.updateRecipe(recipeID, thumbnail, title, tags, notes)
+                self.setBrowserRecipes()
+                self.recipeBrowser.resetViewer()
 
 
 
