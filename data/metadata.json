@@ -1,14 +1,3 @@
 {
-    "recipes": {
-        "1": {
-            "id": "1",
-            "title": "test",
-            "tags": [
-                "test"
-            ],
-            "notes": "1\\notes.txt",
-            "thumb": null,
-            "created": "2019-01-13 13:23:38"
-        }
-    }
+    "recipes": {}
 }
