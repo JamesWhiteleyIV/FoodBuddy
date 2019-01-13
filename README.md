@@ -13,3 +13,8 @@ on any OS that can run PyQt5:
   
 - PyQt5
   - pip3 install pyqt5
+
+# How to run
+After you have the requirements, you can launch the app using run_mac or run_windows
+within the launchers/ folder.  Recipes are stored in the data/ folder which is created
+the first time FoodBuddy runs.
