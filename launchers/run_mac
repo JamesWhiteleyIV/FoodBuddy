@@ -1,4 +1,4 @@
 #!/bin/bash
 
 BASEDIR=$(dirname "$0")
-pyw "$BASEDIR/../FoodBuddy/main.py"
+python3 "$BASEDIR/../FoodBuddy/main.py"
