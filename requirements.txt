@@ -3,8 +3,5 @@
 # Install python3 and add python3 scripts directory to path (if not already there)
 https://www.python.org/downloads/
 
-# Install pdfkit
-pip3 install pdfkit
-
 # Install PyQt5 
 pip3 install pyqt5
