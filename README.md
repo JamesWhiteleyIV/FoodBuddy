@@ -3,7 +3,7 @@ A self-contained app that can save and browse recipes from the web.
 
 
 # Requirements
-- python 3 (add python 3 scripts directory to path if not already there)
+- python 3 (add python 3 scripts directory to system path if not already there)
 
 - Has been tested on the following operating systems, although it should work 
 on any OS that can run PyQt5:
