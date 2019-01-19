@@ -62,7 +62,22 @@ class RecipeViewerWidget(QtWidgets.QListWidget):
         self._setupUI()
         self._connectSignals()
 
+    def updateRecipeFont(self, amount):
+        newSize = self.fontSize + amount
+        if newSize > 40:
+            return
+        if newSize < 8:
+            return
+        self.fontSize = newSize
+        styleSheet = "font: {}px;".format(self.fontSize)
+        self.recipeNotes.setStyleSheet(styleSheet)
+
+
     def _setupUI(self):
+        self.fontSize = 12
+        self.plusButton = QtWidgets.QPushButton('+')
+        self.minusButton = QtWidgets.QPushButton('-')
+
         w = 400
         h = 500
         self.recipeThumb = RecipeThumbnailWidget()
@@ -91,12 +106,17 @@ class RecipeViewerWidget(QtWidgets.QListWidget):
         self.buttonLayout.addStretch()
         self.buttonLayout.addWidget(self.updateButton)
 
+        self.fontSizeLayout = QtWidgets.QHBoxLayout()
+        self.fontSizeLayout.addWidget(self.plusButton)
+        self.fontSizeLayout.addWidget(self.minusButton)
+
         self.mainGridLayout = QtWidgets.QGridLayout()
         self.mainGridLayout.addWidget(self.recipeThumb, 0, 0)
         self.mainGridLayout.addWidget(self.recipeTitle, 1, 0)
-        self.mainGridLayout.addWidget(self.recipeNotes, 2, 0)
-        self.mainGridLayout.addWidget(self.recipeTags, 3, 0)
-        self.mainGridLayout.addLayout(self.buttonLayout, 4, 0)
+        self.mainGridLayout.addLayout(self.fontSizeLayout, 2, 0)
+        self.mainGridLayout.addWidget(self.recipeNotes, 3, 0)
+        self.mainGridLayout.addWidget(self.recipeTags, 4, 0)
+        self.mainGridLayout.addLayout(self.buttonLayout, 5, 0)
 
         self.mainLayout.addLayout(self.mainGridLayout)
         self.setLayout(self.mainLayout)
@@ -104,6 +124,14 @@ class RecipeViewerWidget(QtWidgets.QListWidget):
     def _connectSignals(self):
         self.deleteButton.clicked.connect(self._emitDelete)
         self.updateButton.clicked.connect(self._emitUpdate)
+        self.plusButton.clicked.connect(self.increaseFont)
+        self.minusButton.clicked.connect(self.decreaseFont)
+
+    def increaseFont(self):
+        self.updateRecipeFont(1)
+
+    def decreaseFont(self):
+        self.updateRecipeFont(-1)
 
     def _emitDelete(self):
         self.deleteRecipeSignal.emit()
@@ -331,6 +359,9 @@ class RecipeThumbnailWidget(QtWidgets.QWidget):
 
 
 class FoodBuddyWidget(QtWidgets.QWidget):
+    STYLE_SHEET = '''
+                font: 12px; 
+                '''
 
     def __init__(self):
         super(FoodBuddyWidget, self).__init__()
@@ -342,6 +373,7 @@ class FoodBuddyWidget(QtWidgets.QWidget):
         self.show()
 
     def _setupUI(self):
+        self.setStyleSheet(self.STYLE_SHEET)
         self.setGeometry(50, 50, 600, 800)
         self.setWindowTitle("FoodBuddy")
         burgerIcon = os.path.join(RESOURCE_DIR, 'burger.png')
