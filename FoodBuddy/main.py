@@ -10,7 +10,8 @@ import shutil
 
 RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESOURCE_DIR = os.path.join(RESOURCE_DIR, 'resources')
-
+BURGER_ICON = os.path.join(RESOURCE_DIR, 'burger.png')
+DARK_STYLE_SHEET = os.path.join(RESOURCE_DIR, 'QTDark.stylesheet')
 
 class ErrorMessage(QtWidgets.QDialog):
 
@@ -94,7 +95,9 @@ class RecipeViewerWidget(QtWidgets.QListWidget):
         self.deleteButton = QtWidgets.QPushButton("Delete Recipe")     
         self.deleteButton.setMaximumWidth(width)
         self.deleteButton.setMinimumWidth(width)
-        self.deleteButton.setStyleSheet("background-color: red; color: black;")
+        #self.deleteButton.setStyleSheet("background-color: red; color: black;")
+        self.deleteButton.setStyleSheet("QPushButton {background-color: #8B0000}"
+                                        "QPushButton:hover {background-color: #af2121}")
 
         self.updateButton = QtWidgets.QPushButton("Update Recipe")     
         self.updateButton.setMaximumWidth(width)
@@ -296,7 +299,8 @@ class RecipeThumbnailWidget(QtWidgets.QWidget):
         self.x, self.y = 200, 200
         self.media.setMinimumWidth(self.x)
         self.media.setMinimumHeight(self.y)
-        self.media.setStyleSheet("QLabel { background-color : rgb(200,200,200); border-radius: 20px;}")
+        #self.media.setStyleSheet("QLabel { background-color : rgb(200,200,200); border-radius: 20px;}")
+        self.media.setStyleSheet("border: 1px solid #5A5A5A;")
 
     def setDefaultThumb(self, msg=None):
         if not msg:
@@ -359,9 +363,6 @@ class RecipeThumbnailWidget(QtWidgets.QWidget):
 
 
 class FoodBuddyWidget(QtWidgets.QWidget):
-    STYLE_SHEET = '''
-                font: 12px; 
-                '''
 
     def __init__(self):
         super(FoodBuddyWidget, self).__init__()
@@ -373,11 +374,12 @@ class FoodBuddyWidget(QtWidgets.QWidget):
         self.show()
 
     def _setupUI(self):
-        self.setStyleSheet(self.STYLE_SHEET)
+        with open(DARK_STYLE_SHEET, "r") as fp:
+            self.setStyleSheet(fp.read())
+
         self.setGeometry(50, 50, 600, 800)
         self.setWindowTitle("FoodBuddy")
-        burgerIcon = os.path.join(RESOURCE_DIR, 'burger.png')
-        self.setWindowIcon(QtGui.QIcon(burgerIcon))
+        self.setWindowIcon(QtGui.QIcon(BURGER_ICON))
         self.center()
 
         recipeThumbLabel = QtWidgets.QLabel("Thumbnail:")
