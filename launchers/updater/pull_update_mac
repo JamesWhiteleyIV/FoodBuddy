@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Mac OSX updater
+# clones master branch of FoodBuddy from git
+# copies FoodBuddy/FoodBuddy to FPBATH  NOTE: this should be updated!!!
+
+rm -rf $TMPDIR/FoodBuddy
+cd $TMPDIR 
+FBPATH="$HOME/Google Drive/FoodBuddy/FoodyBuddy/" 
+git clone https://github.com/JamesWhiteleyIV/FoodBuddy.git
+cp -a FoodBuddy/FoodBuddy/. $FBPATH
+rm -rf $TMPDIR/FoodBuddy
