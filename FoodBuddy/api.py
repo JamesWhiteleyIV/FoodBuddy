@@ -19,11 +19,11 @@ class Recipe(object):
 
     def __init__(self, thumbnail, title, tags, notes=""):
         """
-            :param thumbnail: <str> path to thumbnail
-            :param title: <str>
-            :param tags: list of <str> 
-            :param notes: <str> 
-            :param thumbnail: <str> path to thumbnail image
+        :param thumbnail: <str> path to thumbnail
+        :param title: <str>
+        :param tags: list of <str> 
+        :param notes: <str> 
+        :param thumbnail: <str> path to thumbnail image
         """
         self.id = self._generateRecipeID()
         self.thumbnail = pathlib.Path(str(thumbnail)) if thumbnail else None
@@ -43,8 +43,16 @@ class Recipe(object):
         """
         Returns next highest available number in recipes dir.
         """
-        recipes = [int(x) for x in os.listdir(RECIPES_DIR)]
-        if not recipes:
+        recipes = []
+        for item in os.listdir(RECIPES_DIR):
+            try:
+                item = int(item)
+            except ValueError: 
+                continue
+            else:
+                recipes.append(item)
+
+        if recipes == []:
             return '1' 
 
         return str(max(recipes) + 1)
