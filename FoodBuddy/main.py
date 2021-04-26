@@ -374,8 +374,10 @@ class FoodBuddyWidget(QtWidgets.QWidget):
         self.show()
 
     def _setupUI(self):
+        '''
         with open(DARK_STYLE_SHEET, "r") as fp:
             self.setStyleSheet(fp.read())
+        '''
 
         self.setGeometry(50, 50, 600, 800)
         self.setWindowTitle("FoodBuddy")
